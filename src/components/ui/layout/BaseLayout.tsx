@@ -4,7 +4,7 @@ import { Navbar } from "../common";
 const BaseLayout = () => {
   return (
     <div className="flex w-screen min-h-screen flex-col">
-      <header className="bg-transparent px-8 py-4 shadow-md">
+      <header className="bg-transparent px-8 py-4 xl:px-20 md:py-6 shadow-md">
         <Navbar />
       </header>
       <main className="content" style={{ padding: "1rem" }}>
