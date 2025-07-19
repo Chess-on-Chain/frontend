@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-
 @theme {
   --color-primary: #101010;
   --color-secondary: #B58863;
@@ -44,7 +43,7 @@
 
 @layer components {
   .connect-btn {
-    @apply px-8 py-2 rounded-sm bg-secondary;
+    @apply px-8 py-1 rounded-sm bg-linear-to-b from-secondary to-[#4F3B2B] text-white;
   }
 
 }

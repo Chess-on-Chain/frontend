@@ -6,15 +6,14 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
 import Gameplay from './pages/Gameplay'
 import Profile from './pages/Profile'
-import Layout from './components/Layout'
+import BaseLayout from './components/ui/layout/BaseLayout'
 
 function App() {
-  // const [count, setCount] = useState(0)
 
   return (
     <Router>
       <Routes>
-        <Route path='/' element={<Layout />} >
+        <Route path='/' element={<BaseLayout />} >
           <Route index element={<Dashboard />} />
           <Route path='/gameplay' element={<Gameplay />} />
           <Route path='/profile' element={<Profile />} />
