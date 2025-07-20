@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
-import { Navbar } from "../common";
+import { Navbar, BottomTabs } from "../common";
+// import BottomTabs from "../common/navigation/bottomTabs";
 
 const BaseLayout = () => {
   return (
@@ -10,6 +11,9 @@ const BaseLayout = () => {
       <main className="content" style={{ padding: "1rem" }}>
         <Outlet />
       </main>
+      <footer className="block sm:hidden">
+        <BottomTabs />
+      </footer>
     </div>
   );
 };
