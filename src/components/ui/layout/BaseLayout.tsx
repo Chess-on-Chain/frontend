@@ -7,7 +7,7 @@ const BaseLayout = () => {
       <header className="bg-transparent px-8 py-4 shadow-md">
         <Navbar />
       </header>
-      <main className="content" style={{ padding: "1rem" }}>
+      <main className="content">
         <Outlet />
       </main>
     </div>

@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "date": "Jul 20, 2025",
+    "players": [
+      {
+        "id": "A1",
+        "username": "Firman",
+        "rankScore": 500,
+        "country": "IDN"
+      },
+      {
+        "id": "A2",
+        "username": "Salis",
+        "rankScore": 400,
+        "country": "IDN"
+      }
+    ],
+    "result": 1,
+    "moves": 20,
+    "status": "Winner"
+  },
+  {
+    "id": 2,
+    "date": "Jul 21, 2025",
+    "players": [
+      {
+        "id": "A1",
+        "username": "Firman",
+        "rankScore": 500,
+        "country": "IDN"
+      },
+      {
+        "id": "A2",
+        "username": "Salis",
+        "rankScore": 400,
+        "country": "IDN"
+      }
+    ],
+    "result": 0,
+    "moves": 10,
+    "status": "Loses"
+  }
+]
