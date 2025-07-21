@@ -43,7 +43,7 @@
 
 @layer components {
   .connect-btn {
-    @apply px-8 py-1 rounded-sm bg-linear-to-b from-secondary to-[#4F3B2B] text-white;
+    @apply px-2 sm:px-4 md:px-6 py-1 md:py-2 rounded-sm bg-linear-to-b from-secondary to-[#4F3B2B] text-white;
   }
 
   .dashboard-content {

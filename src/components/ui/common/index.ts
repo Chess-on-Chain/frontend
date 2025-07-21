@@ -7,3 +7,6 @@ export { default as BtnToProfile } from "./button/BtnToProfile"
 // Cards
 export { default as CardHistory } from "./cards/card-history"
 export { default as ProfileDashboard } from "./cards/card-profiles/profile-dashboard"
+
+// Navigations
+export { default as BottomTabs } from "./navigation/bottomTabs"
