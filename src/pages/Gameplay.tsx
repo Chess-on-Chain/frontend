@@ -1,8 +1,12 @@
+import FullscreenGameLayout from "../components/ui/layout/FullscreenLayout"
+
 const Gameplay = () => {
     return (
-        <h1 className="text-2xl font-semibold">
-         Gameplay
-        </h1>
+        <FullscreenGameLayout>
+            <div className="aspect-square w-full max-w-[400px] bg-white">
+                hallo gess
+            </div>
+        </FullscreenGameLayout>
     )
 }
 
