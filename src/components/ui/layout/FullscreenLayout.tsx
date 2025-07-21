@@ -1,12 +1,6 @@
-// import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 
-import type { ReactNode } from "react";
-
-type Props = {
-  children?: ReactNode;
-};
-
-const FullscreenGameLayout = ({ children }: Props) => {
+const FullscreenGameLayout = () => {
   return (
     // <div className="w-screen h-screen overflow-hidden flex items-center justify-center text-wite">
     <div className="w-screen h-screen flex flex-col text-white">
@@ -15,7 +9,9 @@ const FullscreenGameLayout = ({ children }: Props) => {
       </header>
 
       <main className="relative flex-1 flex items-center justify-center">
-        <div className="w-[768px] h-[768px] bg-secondary">{children}</div>
+        <div className="w-full h-[768px] flex justify-center items-center bg-black">
+          <Outlet />
+        </div>
       </main>
 
       <footer className="flex items-center justify-center h-24 bg-black">

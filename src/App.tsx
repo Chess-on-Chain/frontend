@@ -15,8 +15,8 @@ function App() {
           <Route path='/profile' element={<Profile />} />
         </Route>
 
-        <Route path='/gameplay' element={<FullscreenGameLayout />}>
-          <Route index element={<Gameplay />} />
+        <Route element={<FullscreenGameLayout />}>
+          <Route path='/gameplay' element={<Gameplay />} />
         </Route>
       </Routes>
     </Router>
