@@ -57,6 +57,12 @@
     }
   }
   
+  .profile-content {
+    @apply relative w-full max-w-[100vw] overflow-x-auto hide-scrollbar min-h-screen p-0 sm:py-4 md:py-8 text-white;
+    & .content {
+      @apply w-full lg:max-w-7xl mx-auto flex flex-col gap-6;
+    }
+  }
 }
 
 @utility hide-scrollbar {
