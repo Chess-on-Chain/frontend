@@ -17,7 +17,7 @@
   --breakpoint-xs: 480px;
 
   --background-image-hero-pattern: url("/card_referalcode.png");
-  --background-image-wrap-card: url("/wrap-card_custom.svg");
+  --background-image-wrap-card: url("/chessboard-pattern.png");
 }
 
 @layer base {
@@ -25,6 +25,7 @@
     font-family: "DM Sans", serif;
     font-optical-sizing: auto;
     background: var(--color-primary);
+    @apply w-full max-w-[100vw] overflow-x-hidden;
   }
 
   h1 {
@@ -36,14 +37,39 @@
   }
 
   main {
-    @apply relative;
-    background: var(--color-primary);
+    @apply relative flex justify-center px-8 sm:px-20;
   }
 }
 
 @layer components {
+  .bg-linear_gradient {
+    @apply bg-linear-to-b from-secondary to-[#4F3B2B];
+  }
+
   .connect-btn {
     @apply px-2 sm:px-4 md:px-6 py-1 md:py-2 rounded-sm bg-linear-to-b from-secondary to-[#4F3B2B] text-white;
   }
 
+  .dashboard-content {
+    @apply relative w-full max-w-[100vw] overflow-x-auto hide-scrollbar min-h-screen p-0 sm:py-4 md:py-8 text-white;
+    & .content {
+      @apply w-full mx-auto flex flex-col md:flex-row xl:px-20 gap-6;
+    }
+  }
+  
+  .profile-content {
+    @apply relative w-full max-w-[100vw] overflow-x-auto hide-scrollbar min-h-screen p-0 sm:py-4 md:py-8 text-white;
+    & .content {
+      @apply w-full lg:max-w-7xl mx-auto flex flex-col gap-6;
+    }
+  }
+}
+
+@utility hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
