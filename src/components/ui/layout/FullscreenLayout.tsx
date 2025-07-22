@@ -5,7 +5,7 @@ const FullscreenGameLayout = () => {
   return (
     // <div className="w-screen h-screen overflow-hidden flex items-center justify-center text-wite">
     <div className="w-screen h-screen flex flex-col text-white">
-      <header className="flex items-center ">
+      <header className="hidden lg:flex items-center">
         <div className="w-full bg-[#0e0e0e] py-4 px-6 grid grid-cols-3 items-center justify-between rounded">
           {/* Kiri */}
           <div className="flex items-center justify-end gap-4">
@@ -159,7 +159,7 @@ const FullscreenGameLayout = () => {
         </div>
       </main>
 
-      <footer className="flex justify-center w-full h-32 px-10 ">
+      <footer className="hidden lg:flex justify-center w-full h-32 px-10 ">
         <div className="flex justify-between items-center w-full h-full">
         {/* <div className="flex justify-between items-center w-full max-w-screen-2xl h-full"> */}
           <Link to="/">
