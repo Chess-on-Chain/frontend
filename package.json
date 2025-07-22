@@ -17,7 +17,15 @@
     "react-chessboard": "^5.2.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.7.0",
-    "tailwindcss": "^4.1.11"
+    "tailwindcss": "^4.1.11",
+    "@dfinity/agent": "2.4.1",
+    "@dfinity/auth-client": "2.4.1",
+    "@dfinity/candid": "2.4.1",
+    "@dfinity/identity": "2.4.1",
+    "@dfinity/ledger-icp": "^4.0.0",
+    "@dfinity/principal": "2.4.1",
+    "@dfinity/utils": "^2.13.2",
+    "@nfid/identitykit": "^1.0.14"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
