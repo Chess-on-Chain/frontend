@@ -3,7 +3,7 @@
 @theme {
   --color-primary: #101010;
   --color-secondary: #B58863;
-  --color-accent: #1756EF;
+  --color-accent: #F0D9B5;
 
   --color-light-100: #cecefb;
   --color-light-200: #a8b5db;
@@ -60,7 +60,7 @@
   .profile-content {
     @apply relative w-full max-w-[100vw] overflow-x-auto hide-scrollbar min-h-screen p-0 sm:py-4 md:py-8 text-white;
     & .content {
-      @apply w-full lg:max-w-7xl mx-auto flex flex-col gap-6;
+      @apply w-full lg:max-w-7xl mx-auto flex flex-col gap-y-10;
     }
   }
 }

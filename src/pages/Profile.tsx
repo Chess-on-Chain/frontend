@@ -32,9 +32,9 @@ const Profile = () => {
   return (
     <div className="profile-content">
       <div className="content">
-        <div className="flex flex-col gap-12 lg:gap-14 w-full px-2 py-8 border-b divide-dashed divide-accent">
+        <div className="flex flex-col gap-12 lg:gap-14 w-full px-2 py-8 border-b border-white/20">
           {/* Profile Header */}
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mb-6">
             <CardProfile data={dataProfiles} />
             <BtnEditProfile />
           </div>

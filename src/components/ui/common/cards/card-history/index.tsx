@@ -6,14 +6,14 @@ type CardHistoryProps = {
 
 export default function CardHistory({ data }: CardHistoryProps) {
   return (
-    <div className="flex-1 bg-[#151515] border border-white/20 rounded-lg p-4 h-auto min-h-[500px] max-h-screen">
+    <div className="flex-1 bg-primary border border-white/20 rounded-lg p-4 h-auto min-h-[500px] max-h-screen">
       <h2 className="text-lg font-semibold mb-4 mx-2">
         Game History ({data.length})
       </h2>
       <div className="overflow-x-scroll hide-scrollbar">
         <table className="w-full text-sm border-separate border-spacing-y-2 table-auto">
           <thead className="text-left text-xs sm:text-sm md:text-base text-white/60 border-b border-white/20 bg-primary">
-            <tr className="bg-primary rounded-xs">
+            <tr className="bg-[#1E1E1E] rounded-xs">
               <th className="p-4">Date</th>
               <th className="p-4">Players</th>
               <th className="p-4">Result</th>
@@ -24,8 +24,8 @@ export default function CardHistory({ data }: CardHistoryProps) {
           <tbody>
             {data.map((game) => (
               <tr className="bg-transparent" key={game.id}>
-                <td className="px-4">{game.date}</td>
-                <td className="px-2">
+                <td className="p-4">{game.date}</td>
+                <td className="p-2">
                   <div className="flex flex-col">
                     {game.players.map((player, index) => (
                       <span key={player.id}>
@@ -35,10 +35,10 @@ export default function CardHistory({ data }: CardHistoryProps) {
                     ))}
                   </div>
                 </td>
-                <td className="px-4">{game.result}</td>
-                <td className="px-4">{game.moves}</td>
+                <td className="p-4">{game.result}</td>
+                <td className="p-4">{game.moves}</td>
                 <td
-                  className={`px-4 font-bold ${
+                  className={`p-4 font-bold ${
                     game.status === "Winner" ? "text-yellow-400" : "text-red-500"
                   }`}
                 >
