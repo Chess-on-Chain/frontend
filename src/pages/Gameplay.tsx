@@ -15,7 +15,6 @@ interface MoveData {
 }
 
 interface LayoutProps {
-  // chessGame: any;
   handleSelfMove: (move: MoveData) => Promise<void>;
   boardOrientation: "white" | "black";
 }
@@ -39,6 +38,8 @@ const Gameplay = () => {
   const [, setChessPosition] = useContext(BoardContext);
 
   useEffect(() => {
+    let loaded = true;
+
     if (!caller) return;
 
     setChessPosition(chessGame.fen());
@@ -47,45 +48,48 @@ const Gameplay = () => {
       x: string,
       orientation: "black" | "white"
     ) => {
-      // const zeroOrOne = orientation == "white" ? 0 : 1;
-
       let totalMove = 0;
-      while (true) {
+      while (loaded) {
         const match = await caller.get_match(x);
         const moves: any[] = match["moves"];
 
-        if (moves.length == totalMove) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          continue;
-        }
-
-        // if (moves.length % 2 === zeroOrOne) {
-        //   const last_move = moves[moves.length - 1];
-        //   // chessGame.move({
-        //   //   from: last_move.from_position.toLowerCase(),
-        //   //   to: last_move.to_position.toLowerCase(),
-        //   // });
-        //   setChessPosition(chessGame.fen());
-        // }
-        setChessPosition(match["fen"]);
-
         if (match["winner"] == orientation) {
           setMatchStatus("win");
+          setChessPosition(match["fen"]);
+          break;
         } else if (
           match["winner"] == (orientation == "white" ? "black" : "white")
         ) {
-          setMatchStatus("lost");
+          setMatchStatus("lose");
+          setChessPosition(match["fen"]);
+          break;
         }
+
+        if (moves.length == totalMove) {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          continue;
+        }
+
+        setChessPosition(match["fen"]);
 
         totalMove = moves.length;
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     };
 
-    caller.get_caller_match().then((match: any[]) => {
-      if (match.length >= 1) {
-        setErrorText("Previous game session not finished");
+    caller.get_caller_match().then(async (matchOpt: any[]) => {
+      if (matchOpt.length >= 1) {
+        const user = await apiGetMe();
+        let color: "white" | "black" = "white";
+        const match = matchOpt[0];
+        if (match["black_player"]["id"].toText() === user.id) {
+          setBoardOrientation("black");
+          color = "black";
+        }
+        setCanPlay(true);
+        setMatchId(match.id);
+        startWatchingMatch(match.id, color);
         return;
       }
 
@@ -97,7 +101,7 @@ const Gameplay = () => {
           // console.log(match, match["black_player"]["id"].toText(), user["id"]);
           let color: "white" | "black" = "white";
 
-          if (match["black_player"]["id"].toText() === user["id"]) {
+          if (match.black_player.id.toText() === user.id) {
             setBoardOrientation("black");
             color = "black";
           }
@@ -125,6 +129,10 @@ const Gameplay = () => {
         }
       });
     });
+
+    return () => {
+      loaded = false;
+    };
   }, [caller]);
 
   const isMobile = useIsMobile();
@@ -178,7 +186,7 @@ const Gameplay = () => {
       {matchStatus == "win" && (
         <div className="fixed h-screen w-full top-0 right-0 bg-black opacity-70 z-50 flex items-center">
           <div className="w-full">
-            <p className="text-center text-green-500 text-xl">Victory</p>
+            <p className="text-center text-green-200 text-3xl">Victory</p>
             <button
               onClick={() => (window.location.href = "/")}
               className="bg-blue-400 text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
@@ -191,7 +199,7 @@ const Gameplay = () => {
       {matchStatus == "lose" && (
         <div className="fixed h-screen w-full top-0 right-0 bg-black opacity-70 z-50 flex items-center">
           <div className="w-full">
-            <p className="text-center text-red-500 text-xl">Defeat</p>
+            <p className="text-center text-red-200 text-3xl">Defeat</p>
             <button
               onClick={() => (window.location.href = "/")}
               className="bg-blue-400 text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"

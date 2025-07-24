@@ -6,10 +6,9 @@ export type Player = {
 };
 
 export type GameHistory = {
-  id: number;
+  id: string;
   date: string;
   players: Player[];
-  result: number;
+  result: string;
   moves: number;
-  status: string;
 };

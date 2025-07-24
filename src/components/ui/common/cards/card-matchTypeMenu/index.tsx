@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiGetMe } from "../../../../../helpers/api";
+import { useAuth } from "@nfid/identitykit/react";
 
 export default function MatchTypeMenu() {
   const [canPlay, setCanPlay] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) return;
     apiGetMe()
       .then((user) => {
         if (user) {
@@ -13,14 +16,14 @@ export default function MatchTypeMenu() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [user]);
 
   const [isError, setIsError] = useState(false);
 
   const activeClassName =
     "relative bg-wrap-card bg-no-repeat bg-cover bg-blend-darken rounded-lg border border-neutral-800 p-4 flex lg:flex-col justify-between items-center lg:items-start h-20 lg:h-[150px]";
   const nonActiveClassName =
-    activeClassName + " opacity-60 pointer-events-none";
+    activeClassName + " opacity-20 pointer-events-none";
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6 w-full md:max-w-xs">
