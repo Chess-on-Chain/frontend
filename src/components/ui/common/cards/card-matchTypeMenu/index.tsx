@@ -1,21 +1,15 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiGetMe } from "../../../../../helpers/api";
-import { useAuth } from "@nfid/identitykit/react";
+import { UserContext } from "../../../../../context/UserContext";
 
 export default function MatchTypeMenu() {
   const [canPlay, setCanPlay] = useState(false);
-  const { user } = useAuth();
+  const user = useContext(UserContext);
+
+  console.log(user)
 
   useEffect(() => {
-    if (!user) return;
-    apiGetMe()
-      .then((user) => {
-        if (user) {
-          setCanPlay(true);
-        }
-      })
-      .catch(() => {});
+    if (user) setCanPlay(true);
   }, [user]);
 
   const [isError, setIsError] = useState(false);

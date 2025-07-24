@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
   BtnToProfile,
   CardHistory,
@@ -6,9 +6,9 @@ import {
 } from "../components/ui/common";
 import MatchTypeMenu from "../components/ui/common/cards/card-matchTypeMenu";
 import type { GameHistory, Player } from "../utils/types";
-import { apiGetMe } from "../helpers/api";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useCaller } from "../hooks/canister";
+import { UserContext } from "../context/UserContext";
 
 const dataProfile = {
   id: 0,
@@ -23,18 +23,23 @@ const Dashboard = () => {
   const loaded = useRef(false);
   const identity = useIdentity();
   const caller = useCaller();
+  const user = useContext(UserContext);
 
   useEffect(() => {
+    if (user) {
+      setDataProfiles({
+        country: user.country || "-",
+        id: "1",
+        rankScore: user.score,
+        username: user.username || user.first_name,
+      });
+    }
+
     if (!identity) {
       return;
     }
 
     if (loaded.current === false) {
-      // fetch("/historyMatch.json")
-      //   .then((response) => response.json())
-      //   .then((data) => setLists(data))
-      //   .then(() => (loaded.current = true));
-
       caller
         .get_histories(identity.getPrincipal(), 0, 20)
         .then((histories: any[]) => {
@@ -96,21 +101,12 @@ const Dashboard = () => {
 
           setLists(result);
         });
-
-      apiGetMe().then((user) => {
-        setDataProfiles({
-          country: user.country || "-",
-          id: "1",
-          rankScore: user.score,
-          username: user.username || user.first_name,
-        });
-      });
     }
 
     return () => {
       console.log("clean up");
     };
-  }, [loaded, identity]);
+  }, [loaded, identity, user]);
 
   return (
     <div className="dashboard-content">
