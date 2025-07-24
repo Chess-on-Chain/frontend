@@ -47,7 +47,7 @@ interface RoomData {
 const STORAGE_KEY = "token";
 
 export const api = axios.create({
-  baseURL: process.env.VITE_BACKEND_URL as string,
+  baseURL: import.meta.env.VITE_BACKEND_URL as string,
   headers: {
     "Content-Type": "application/json",
   },
