@@ -6,7 +6,7 @@ import BaseLayout from "./components/ui/layout/BaseLayout";
 import { IdentityKitProvider } from "@nfid/identitykit/react";
 import "@nfid/identitykit/react/styles.css";
 import { IdentityKitAuthType } from "@nfid/identitykit";
-import FullscreenGameLayout from "./components/ui/layout/FullscreenLayout";
+// import FullscreenGameLayout from "./components/ui/layout/FullscreenLayout";
 import ProfileSettings from "./pages/ProfileSettings";
 import { BoardProvider } from "./context/BoardContext";
 import ComingSoon from "./pages/ComingSoon";
@@ -23,7 +23,7 @@ function App() {
             <Route path="/gameplay/coming-soon" element={<ComingSoon />} />
           </Route>
 
-          <Route element={<FullscreenGameLayout />}>
+          {/* <Route element={<FullscreenGameLayout />}> */}
             <Route
               path="/gameplay"
               element={
@@ -32,7 +32,7 @@ function App() {
                 </BoardProvider>
               }
             />
-          </Route>
+          {/* </Route> */}
         </Routes>
       </Router>
     </IdentityKitProvider>

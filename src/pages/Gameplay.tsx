@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import Board from "../components/ui/common/board/Board";
-import { Flag } from "lucide-react";
+import { Flag, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useCaller } from "../hooks/canister";
@@ -231,191 +231,193 @@ const MobileLayout: React.FC<LayoutProps> = ({
   boardOrientation,
 }) => {
   return (
-    <div className="lg:hidden w-full mx-auto py-10 flex flex-col items-center p-0 space-x-4 space-y-4 min-h-screen">
-      {/* PLAYER 1 */}
-      <div className="flex justify-between itmes-center space-x-2 w-full text-white text-sm">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-full bg-secondary"></div>
-          <div>
-            <p>@Username</p>
-            <p className="text-white/50">IDN</p>
+    <div className="w-screen h-screen flex flex-col text-white">
+      <div className="lg:hidden w-full px-8 mx-auto py-10 flex flex-col items-center p-0 space-x-4 space-y-4 min-h-screen">
+        {/* PLAYER 1 */}
+        <div className="flex justify-between itmes-center space-x-2 w-full text-white text-sm" style={{ marginRight: "0px" }}>
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-full bg-secondary"></div>
+            <div>
+              <p>@Username</p>
+              <p className="text-white/50">IDN</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-1 px-2 text-sm">
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♞
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♖
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              ♙
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♞
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♖
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              ♙
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♞
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♖
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              ♙
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♞
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♖
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              ♙
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♞
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♖
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              ♙
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♞
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♖
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              ♙
+            </div>
+          </div>
+          {/* Timer Player 1 */}
+          <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary text-white/50">-:-</div>
+        </div>
+
+        <div className="aspect-square w-full max-w-[700px] bg-white" style={{ marginRight: "0px" }}>
+          <Board
+            boardOrientation={boardOrientation}
+            onSelfMove={handleSelfMove}
+          />
+        </div>
+
+        {/* PLAYER 2 */}
+        <div className="flex justify-between items-center space-x-2 w-full text-sm text-white" style={{ marginRight: "0px" }}>
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-full bg-secondary"></div>
+            <div>
+              <p>@Username</p>
+              <p className="text-white/50">IDN</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-1 px-2 text-sm">
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♞
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♖
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              ♙
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♞
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♖
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              ♙
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♞
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♖
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              ♙
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♞
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♖
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              ♙
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♞
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♖
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              ♙
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♞
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span className="text-xs">+2</span> ♖
+            </div>
+            <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+              ♙
+            </div>
+          </div>
+          {/* Timer Player 2 */}
+          <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary">0:20</div>
+        </div>
+
+        {/* RESIGN BUTTON */}
+        <div className="flex justify-center items-center w-full my-8">
+          <div className="text-center">
+            <div className="p-3.5 rounded-full mb-1 5 mx-auto bg-secondary">
+              <Link to="/">
+                <Flag size={24} className="text-black" />
+              </Link>
+            </div>
+            <p className="text-white">Resign</p>
           </div>
         </div>
-        <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-1 px-2 text-sm">
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-        </div>
-        {/* Timer Player 1 */}
-        <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary text-white/50">-:-</div>
-      </div>
 
-      <div className="aspect-square w-full max-w-[700px] bg-white">
-        <Board
-          boardOrientation={boardOrientation}
-          onSelfMove={handleSelfMove}
-        />
-      </div>
+        {/* SCORE BOTTOM */}
+        <div className="w-full border-t border-white/20 text-center text-sm text-white">
+          {/* MOVES */}
+          <div className="flex-1 flex justify-center h-[400px] w-full py-4">
+            <div className="w-full lg:hidden h-full">
+              <div className="flex items-center justify-center p-4 h-full">
+                <div className="border border-white/40 rounded w-full h-full flex flex-col">
+                  {/* Scrollable content */}
+                  <div className="flex-1 overflow-y-auto hide-scrollbar">
+                    {Array.from({ length: 30 }, (_, i) => (
+                      <div
+                        key={i}
+                        className="grid grid-cols-[auto_1fr_1fr] divide-x-3 divide-dashed divide-white/20 items-center text-white text-sm border-b border-white/20 py-2 px-4"
+                      >
+                        <span className="min-w-10 text-left text-white/40">
+                          {i + 1}
+                        </span>
+                        <span className="text-center">♟ C6</span>
+                        <span className="text-center">♟ C6</span>
+                      </div>
+                    ))}
+                  </div>
 
-      {/* PLAYER 2 */}
-      <div className="flex justify-between items-center space-x-2 w-full text-sm text-white">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-full bg-secondary"></div>
-          <div>
-            <p>@Username</p>
-            <p className="text-white/50">IDN</p>
-          </div>
-        </div>
-        <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-1 px-2 text-sm">
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-        </div>
-        {/* Timer Player 2 */}
-        <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary">0:20</div>
-      </div>
-
-      {/* RESIGN BUTTON */}
-      <div className="flex justify-center items-center w-full my-8">
-        <div className="text-center">
-          <div className="p-3.5 rounded-full mb-1 5 mx-auto bg-secondary">
-            <Link to="/">
-              <Flag size={24} className="text-black" />
-            </Link>
-          </div>
-          <p className="text-white">Resign</p>
-        </div>
-      </div>
-
-      {/* SCORE BOTTOM */}
-      <div className="w-full border-t border-white/20 text-center text-sm text-white">
-        {/* MOVES */}
-        <div className="flex-1 flex justify-center h-[400px] w-full py-4">
-          <div className="w-full lg:hidden h-full">
-            <div className="flex items-center justify-center p-4 h-full">
-              <div className="border border-white/40 rounded w-full h-full flex flex-col">
-                {/* Scrollable content */}
-                <div className="flex-1 overflow-y-auto hide-scrollbar">
-                  {Array.from({ length: 30 }, (_, i) => (
-                    <div
-                      key={i}
-                      className="grid grid-cols-[auto_1fr_1fr] divide-x-3 divide-dashed divide-white/20 items-center text-white text-sm border-b border-white/20 py-2 px-4"
-                    >
-                      <span className="min-w-10 text-left text-white/40">
-                        {i + 1}
-                      </span>
-                      <span className="text-center">♟ C6</span>
-                      <span className="text-center">♟ C6</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Fixed bottom */}
-                <div className="h-16 border-t border-white/20 px-4 flex items-center text-white text-sm text-wrap lg:text-base space-x-4">
-                  <p className="font-medium">Score : </p>
-                  <span className="align-baseline">0 | 1</span>
+                  {/* Fixed bottom */}
+                  <div className="h-16 border-t border-white/20 px-4 flex items-center text-white text-sm text-wrap lg:text-base space-x-4">
+                    <p className="font-medium">Score : </p>
+                    <span className="align-baseline">0 | 1</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -428,60 +430,232 @@ const MobileLayout: React.FC<LayoutProps> = ({
 
 const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
   return (
-    <div className="hidden lg:flex items-center justify-center w-full h-full space-x-4">
-      {/* LEFT - RESIGN */}
-      <div className="flex-1 h-full flex justify-center">
-        <div className="flex justify-center items-center w-full lg:w-3/5 h-full">
-          <div className="mx-auto text-center">
-            <div className="p-4.5 mx-auto rounded-full mb-1 5 bg-secondary">
-              <Link to="/">
-                <Flag size={24} className="text-black" />
-              </Link>
+    <div className="w-screen h-screen flex flex-col text-white">
+      <header className="hidden lg:flex items-center">
+        <div className="w-full bg-[#0e0e0e] py-4 px-6 grid grid-cols-3 items-center justify-between rounded">
+          {/* Kiri */}
+          <div className="flex items-center justify-end gap-4">
+            <div className="flex gap-4">
+              <div className="w-12 h-12 rounded-full bg-linear_gradient" />
+              <div className="max-w-[100px] text-white text-sm leading-tight">
+                <div className="lg:text-xl text-clip line-clamp-1">@Username jdjdjdjdjdjdjdjddkdkdkdkdkdkddjdjdjdjdjdjdjdjdjdjdjdjdjd</div>
+                <div className="text-white/50 text-xs lg:text-base">IDN - 300</div>
+              </div>
             </div>
-            <p className="text-lg tracking-wide text-white">Resign</p>
+            <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-4 px-2 text-sm">
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <span className="text-xs">+2</span> ♞
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <span className="text-xs">+2</span> ♖
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♙
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <span className="text-xs">+2</span> ♞
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <span className="text-xs">+2</span> ♖
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♙
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <span className="text-xs">+2</span> ♞
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <span className="text-xs">+2</span> ♖
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♙
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <span className="text-xs">+2</span> ♞
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <span className="text-xs">+2</span> ♖
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♙
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <span className="text-xs">+2</span> ♞
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <span className="text-xs">+2</span> ♖
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♙
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <span className="text-xs">+2</span> ♞
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <span className="text-xs">+2</span> ♖
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♙
+              </div>
+            </div>
+          </div>
+
+          {/* Tengah */}
+          <div className="flex col-auto justify-center items-center space-x-10 text-white">
+            <div className="time-player1 text-5xl italic text-white">0:20</div>
+            <div className="text-white flex flex-col items-center">
+              <div className="text-2xl font-semibold">⏱</div>
+              <div className="text-white/60 text-sm italic">Time Match</div>
+            </div>
+            <div className="time-player2 text-white/50 text-5xl italic">-:-</div>
+          </div>
+
+          {/* Kanan */}
+          <div className="flex items-center justify-end gap-4">
+            <div className="text-white flex flex-row-reverse gap-2 mr-4 px-2 text-sm overflow-x-scroll whitespace-nowrap hide-scrollbar">
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♕
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♞ <span className="text-xs">+2</span>
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♙ <span className="text-xs">+4</span>
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♕
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♞ <span className="text-xs">+2</span>
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♙ <span className="text-xs">+4</span>
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♕
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♞ <span className="text-xs">+2</span>
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♙ <span className="text-xs">+4</span>
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♕
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♞ <span className="text-xs">+2</span>
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♙ <span className="text-xs">+4</span>
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♕
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♞ <span className="text-xs">+2</span>
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♙ <span className="text-xs">+4</span>
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♕
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♞ <span className="text-xs">+2</span>
+              </div>
+              <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                ♙ <span className="text-xs">+4</span>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <div className="max-w-[100px] text-white text-sm leading-tight text-right">
+                <div className="lg:text-xl text-right text-clip line-clamp-1">@Username jdjdjdjdjdjdjdjddkdkdkdkdkdkddjdjdjdjdjdjdjdjdjdjdjdjdjd</div>
+                <div className="text-white/50 text-xs lg:text-base">200 - IDN</div>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-linear_gradient" />
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* MIDDLE - BOARD */}
-      <div className="aspect-square w-full max-w-[700px] bg-white">
-        <Board
-          // key={isMobile ? "mobile" : "desktop"}
-          boardOrientation="white"
-          onSelfMove={handleSelfMove}
-        />
-      </div>
-
-      {/* RIGHT - MOVES & SCORE */}
-      <div className="flex-1 flex justify-center h-full py-4">
-        <div className="w-full xl:w-3/5 h-full">
-          <div className="flex items-center justify-center p-4 h-full">
-            <div className="border border-white/40 rounded w-full h-full flex flex-col">
-              {/* Scrollable content */}
-              <div className="flex-1 overflow-y-auto hide-scrollbar">
-                {Array.from({ length: 30 }, (_, i) => (
-                  <div
-                    key={i}
-                    className="grid grid-cols-[auto_1fr_1fr] divide-x-3 divide-dashed divide-white/20 items-center text-white text-sm border-b border-white/20 py-2 px-4"
-                  >
-                    <span className="min-w-10 text-left text-white/40">
-                      {i + 1}
-                    </span>
-                    <span className="text-center">♟ C6</span>
-                    <span className="text-center">♟ C6</span>
+      <main className="relative flex-1 flex items-center justify-center">
+        <div className="w-full h-[768px] flex justify-center items-center">
+          <div className="hidden lg:flex items-center justify-center w-full h-full space-x-4">
+            {/* LEFT - RESIGN */}
+            <div className="flex-1 h-full flex justify-center">
+              <div className="flex justify-center items-center w-full lg:w-3/5 h-full">
+                <div className="mx-auto text-center">
+                  <div className="p-4.5 mx-auto rounded-full mb-1 5 bg-secondary">
+                    <Link to="/">
+                      <Flag size={24} className="text-black" />
+                    </Link>
                   </div>
-                ))}
+                  <p className="text-lg tracking-wide text-white">Resign</p>
+                </div>
               </div>
+            </div>
 
-              {/* Fixed bottom */}
-              <div className="h-16 border-t border-white/20 px-4 flex items-center text-white text-sm text-wrap lg:text-base space-x-4">
-                <p className="font-medium">Score : </p>
-                <span className="align-baseline">0 | 1</span>
+            {/* MIDDLE - BOARD */}
+            <div className="aspect-square w-full max-w-[700px] bg-white">
+              <Board
+                // key={isMobile ? "mobile" : "desktop"}
+                boardOrientation="white"
+                onSelfMove={handleSelfMove}
+              />
+            </div>
+
+            {/* RIGHT - MOVES & SCORE */}
+            <div className="flex-1 flex justify-center h-full py-4">
+              <div className="w-full xl:w-3/5 h-full">
+                <div className="flex items-center justify-center p-4 h-full">
+                  <div className="border border-white/40 rounded w-full h-full flex flex-col">
+                    {/* Scrollable content */}
+                    <div className="flex-1 overflow-y-auto hide-scrollbar">
+                      {Array.from({ length: 30 }, (_, i) => (
+                        <div
+                          key={i}
+                          className="grid grid-cols-[auto_1fr_1fr] divide-x-3 divide-dashed divide-white/20 items-center text-white text-sm border-b border-white/20 py-2 px-4"
+                        >
+                          <span className="min-w-10 text-left text-white/40">
+                            {i + 1}
+                          </span>
+                          <span className="text-center">♟ C6</span>
+                          <span className="text-center">♟ C6</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Fixed bottom */}
+                    <div className="h-16 border-t border-white/20 px-4 flex items-center text-white text-sm text-wrap lg:text-base space-x-4">
+                      <p className="font-medium">Score : </p>
+                      <span className="align-baseline">0 | 1</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
+
+      <footer className="hidden lg:flex justify-center w-full h-32 px-10 ">
+        <div className="flex justify-between items-center w-full h-full">
+          <Link to="/">
+            <img src="/Logo-COC-Black-Version.png" alt="Logo COC" className="h-14" />
+          </Link>
+          <button className="text-center cursor-pointer">
+            <div className="mx-auto text-center">
+              <div className="p-3.5 mx-auto rounded-full mb-1 bg-secondary">
+                <Link to="/">
+                  <Home size={24} className="text-black" />
+                </Link>
+              </div>
+              <p className="text-lg tracking-wide text-white">Home</p>
+            </div>
+          </button>
+        </div>
+      </footer>
     </div>
   );
 };
