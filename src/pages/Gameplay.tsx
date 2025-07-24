@@ -111,7 +111,7 @@ const Gameplay = () => {
         } else {
           const interval = setInterval(async () => {
             let match = await caller.get_caller_match();
-            console.log(match);
+            // console.log(match);
             if (match.length >= 1) {
               match = match[0];
               let color: "white" | "black" = "white";
