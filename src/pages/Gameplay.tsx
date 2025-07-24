@@ -26,7 +26,7 @@ const Gameplay = () => {
 
   const [matchId, setMatchId] = useState("");
   const [canPlay, setCanPlay] = useState(false);
-  const [errorText, setErrorText] = useState<string | undefined>();
+  const [errorText] = useState<string | undefined>();
 
   const [matchStatus, setMatchStatus] = useState("ongoing");
 

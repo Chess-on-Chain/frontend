@@ -88,4 +88,4 @@ export const idlFactory = ({ IDL }: any) => {
       ),
   });
 };
-export const init = ({ IDL }: any) => { return []; };
+export const init = ({ IDL }: any) => { IDL; return []; };
