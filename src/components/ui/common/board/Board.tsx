@@ -1,19 +1,17 @@
 import { Chess, type Square } from "chess.js";
-import { useRef, useState } from "react";
+import { useContext, useState } from "react";
 import {
   Chessboard,
   defaultPieces,
   type SquareHandlerArgs,
 } from "react-chessboard";
+import { BoardContext } from "../../../../context/BoardContext";
 
 export default function Board({
   boardOrientation,
   onSelfMove,
-  chess,
 }: {
-  fen?: string;
   boardOrientation: "black" | "white";
-  chess?: Chess;
   onSelfMove: ({
     from_position,
     to_position,
@@ -24,17 +22,11 @@ export default function Board({
     piece: string;
   }) => Promise<void>;
 }) {
-  if (!chess) {
-    const chessRef = useRef(new Chess());
-    chess = chessRef.current;
-  }
-
-  const chessGame = chess as Chess;
-
-  // track the current position of the chess game in state to trigger a re-render of the chessboard
-  const [chessPosition, setChessPosition] = useState(chessGame.fen());
+  const [chessPosition, setChessPosition] = useContext(BoardContext);
   const [moveFrom, setMoveFrom] = useState("");
   const [optionSquares, setOptionSquares] = useState({});
+
+  const chessGame = new Chess(chessPosition);
 
   const [currentPiece, setCurrentPiece] = useState("");
 
@@ -123,6 +115,7 @@ export default function Board({
     }
 
     // is normal move
+    // console.log({moveFrom, square}, 's')
     try {
       chessGame.move({
         from: moveFrom,
@@ -171,5 +164,8 @@ export default function Board({
     pieces,
   };
 
-  return <Chessboard options={chessboardOptions} />;
+  return (
+    <Chessboard options={chessboardOptions} />
+    // </BoardContext.Provider>
+  );
 }

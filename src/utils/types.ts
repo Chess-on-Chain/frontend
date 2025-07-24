@@ -1,15 +1,14 @@
 export type Player = {
   id: string | number;
   username: string;
-  rankScore: number;
+  rankScore: number | string;
   country: string;
 };
 
 export type GameHistory = {
-  id: number;
+  id: string;
   date: string;
   players: Player[];
-  result: number;
+  result: string;
   moves: number;
-  status: string;
 };
