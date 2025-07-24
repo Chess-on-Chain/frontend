@@ -9,7 +9,7 @@ export default function BottomTabs() {
           className="inline-flex flex-col items-center justify-center px-5 dark:bg-primary hover:bg-none group cursor-pointer"
         >
           <Link to="/" className="flex justify-center flex-col items-center">
-            <img src="/icon-home.svg" alt="Icon Home" className="w-8 h-8" />
+            <img src="/icon-home.svg" alt="Icon Home" className="w-8 h-8 -ml-0.5" />
             <span className="text-xs text-secondary dark:text-secondary group-hover:text-accent dark:group-hover:text-secondary">
               Home
             </span>
