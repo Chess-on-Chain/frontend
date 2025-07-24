@@ -1,4 +1,3 @@
-import { Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import ConnectWalletBtn from "../button/BtnConnectWallet";
 
@@ -15,11 +14,6 @@ export default function Navbar() {
         </div>
 
         <div className="flex justify-end items-center space-x-4 sm:space-x-10">
-          {/* Notif Icon */}
-          <button className="text-[#c29570] hover:text-white">
-            <Bell color="currentColor" strokeWidth={1} className="w-5 h-5 sm:w-7 sm:h-7 mt-px sm:text-2xl text-secondary"/>
-          </button>
-
           {/* Connect to Wallet */}
           <ConnectWalletBtn />
         </div>

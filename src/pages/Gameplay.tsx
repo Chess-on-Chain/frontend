@@ -168,10 +168,10 @@ const Gameplay = () => {
       )}
       {!canPlay && !errorText && (
         <div className="fixed h-screen w-full top-0 right-0 bg-black/70 z-50 flex items-center">
-          <div className="w-full">
+          <div className="w-full space-y-6">
             <p className="text-center text-xl">Waiting opponent...</p>
             <button
-              className="bg-red-400 text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
+              className="bg-red-500 text-black font-semibold text-xl leading-8 px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
               onClick={() => {
                 apiCancelRoom().then(() => {
                   window.location.href = "/";
@@ -184,12 +184,12 @@ const Gameplay = () => {
         </div>
       )}
       {matchStatus == "win" && (
-        <div className="fixed h-screen w-full top-0 right-0 bg-black opacity-70 z-50 flex items-center">
-          <div className="w-full">
-            <p className="text-center text-green-200 text-3xl">Victory</p>
+        <div className="fixed h-screen w-full top-0 right-0 bg-black/70 z-50 flex items-center">
+          <div className="w-full space-y-8">
+            <p className="text-center text-white font-medium text-3xl sm:text-5xl leading-20 sm:leading-24 bg-linear-to-l from-white/0 from-20% via-[#fdda13bb] via-50% to-white/0 to-80%">Victory</p>
             <button
               onClick={() => (window.location.href = "/")}
-              className="bg-blue-400 text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
+              className="bg-secondary text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
             >
               Back
             </button>
@@ -197,12 +197,12 @@ const Gameplay = () => {
         </div>
       )}
       {matchStatus == "lose" && (
-        <div className="fixed h-screen w-full top-0 right-0 bg-black opacity-70 z-50 flex items-center">
-          <div className="w-full">
-            <p className="text-center text-red-200 text-3xl">Defeat</p>
+        <div className="fixed h-screen w-full top-0 right-0 bg-black/70 z-50 flex items-center">
+          <div className="w-full space-y-8">
+            <p className="text-center text-white font-medium tracking-wide text-3xl sm:text-5xl leading-20 sm:leading-24 bg-linear-to-l from-white/10 from-0% via-red-600 via-20% to-white/10 to-100%">Defeat</p>
             <button
               onClick={() => (window.location.href = "/")}
-              className="bg-blue-400 text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
+              className="bg-secondary text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
             >
               Back
             </button>
@@ -297,7 +297,8 @@ const MobileLayout: React.FC<LayoutProps> = ({
             ♙
           </div>
         </div>
-        <div className="ml-2 px-3 py-1 text-xl border border-white">0:20</div>
+        {/* Timer Player 1 */}
+        <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary text-white/50">-:-</div>
       </div>
 
       <div className="aspect-square w-full max-w-[700px] bg-white">
@@ -372,7 +373,8 @@ const MobileLayout: React.FC<LayoutProps> = ({
             ♙
           </div>
         </div>
-        <div className="ml-2 px-3 py-1 text-xl border border-white">0:20</div>
+        {/* Timer Player 2 */}
+        <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary">0:20</div>
       </div>
 
       {/* RESIGN BUTTON */}

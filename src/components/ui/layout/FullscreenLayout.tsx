@@ -76,12 +76,12 @@ const FullscreenGameLayout = () => {
 
           {/* Tengah */}
           <div className="flex col-auto justify-center items-center space-x-10 text-white">
-            <div className="time-player1 text-5xl italic text-gray-500">0:20</div>
+            <div className="time-player1 text-5xl italic text-white">0:20</div>
             <div className="text-white flex flex-col items-center">
               <div className="text-2xl font-semibold">⏱</div>
               <div className="text-white/60 text-sm italic">Time Match</div>
             </div>
-            <div className="time-player2 text-5xl italic">0:10</div>
+            <div className="time-player2 text-white/50 text-5xl italic">-:-</div>
           </div>
 
           {/* Kanan */}
@@ -166,12 +166,14 @@ const FullscreenGameLayout = () => {
             <img src="/Logo-COC-Black-Version.png" alt="Logo COC" className="h-14" />
           </Link>
           <button className="text-center cursor-pointer">
-            <div className="relative w-[46px] h-[46px] mx-auto rounded-full mb-1.5 bg-secondary">
-              <Link to="/">
-                <Home className="absolute top-[18%] left-[50%] -translate-x-[50%] w-[28px] h-[28px] text-black"/>
-              </Link>
+            <div className="mx-auto text-center">
+              <div className="p-3.5 mx-auto rounded-full mb-1 bg-secondary">
+                <Link to="/">
+                  <Home size={24} className="text-black" />
+                </Link>
+              </div>
+              <p className="text-lg tracking-wide text-white">Home</p>
             </div>
-            <p className="text-lg tracking-wide">Back to Home</p>
           </button>
         </div>
       </footer>
