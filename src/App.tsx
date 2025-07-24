@@ -9,6 +9,7 @@ import { IdentityKitAuthType } from "@nfid/identitykit";
 import FullscreenGameLayout from "./components/ui/layout/FullscreenLayout";
 import ProfileSettings from "./pages/ProfileSettings";
 import { BoardProvider } from "./context/BoardContext";
+import ComingSoon from "./pages/ComingSoon";
 import { useContext, useState } from "react";
 import { clearToken } from "./helpers/api";
 import ConnectSuccessContext from "./context/ConnectSuccessContext";
@@ -26,7 +27,7 @@ function Provider({ children }: any) {
 
 function Home() {
   const [, setIsConnect] = useContext(ConnectSuccessContext);
-
+    
   return (
     <IdentityKitProvider
       authType={IdentityKitAuthType.DELEGATION}
@@ -45,6 +46,7 @@ function Home() {
               <Route index element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/profile/edit" element={<ProfileSettings />} />
+              <Route path="/gameplay/coming-soon" element={<ComingSoon />} />
             </Route>
 
             <Route element={<FullscreenGameLayout />}>

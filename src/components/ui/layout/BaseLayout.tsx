@@ -8,7 +8,7 @@ const BaseLayout = () => {
   const shouldHideUI = hiddenRoutes.includes(location.pathname);
 
   return (
-    <div className="flex w-screen min-h-screen flex-col">
+    <div className="flex w-screen min-h-screen flex-col hide-scrollbar">
       {!shouldHideUI && (
         <header className="bg-transparent px-8 py-4 xl:px-20 md:py-6 shadow-md transition-all duration-300">
           <Navbar />
