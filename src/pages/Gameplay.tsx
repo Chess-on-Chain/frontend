@@ -1,9 +1,12 @@
-import React, { useRef } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import Board from "../components/ui/common/board/Board";
 import { Flag } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { useCaller } from "../hooks/canister";
+import { apiCancelRoom, apiCreateOrJoinRoom, apiGetMe } from "../helpers/api";
+import { BoardContext } from "../context/BoardContext";
 
 interface MoveData {
   from_position: string;
@@ -12,41 +15,213 @@ interface MoveData {
 }
 
 interface LayoutProps {
-  chessGame: any;
+  // chessGame: any;
   handleSelfMove: (move: MoveData) => Promise<void>;
+  boardOrientation: "white" | "black";
 }
 
 const Gameplay = () => {
-  const chessGameRef = useRef(new Chess());
-  const chessGame = chessGameRef.current;
+  const [boardOrientation, setBoardOrientation] = useState<"white" | "black">(
+    "white"
+  );
+
+  const [matchId, setMatchId] = useState("");
+  const [canPlay, setCanPlay] = useState(false);
+  const [errorText, setErrorText] = useState<string | undefined>();
+
+  const [matchStatus, setMatchStatus] = useState("ongoing");
+
+  const caller: any = useCaller();
+
+  const chessRef = useRef(new Chess());
+  const chessGame = chessRef.current;
+
+  const [, setChessPosition] = useContext(BoardContext);
+
+  useEffect(() => {
+    if (!caller) return;
+
+    setChessPosition(chessGame.fen());
+
+    const startWatchingMatch = async (
+      x: string,
+      orientation: "black" | "white"
+    ) => {
+      // const zeroOrOne = orientation == "white" ? 0 : 1;
+
+      let totalMove = 0;
+      while (true) {
+        const match = await caller.get_match(x);
+        const moves: any[] = match["moves"];
+
+        if (moves.length == totalMove) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          continue;
+        }
+
+        // if (moves.length % 2 === zeroOrOne) {
+        //   const last_move = moves[moves.length - 1];
+        //   // chessGame.move({
+        //   //   from: last_move.from_position.toLowerCase(),
+        //   //   to: last_move.to_position.toLowerCase(),
+        //   // });
+        //   setChessPosition(chessGame.fen());
+        // }
+        setChessPosition(match["fen"]);
+
+        if (match["winner"] == orientation) {
+          setMatchStatus("win");
+        } else if (
+          match["winner"] == (orientation == "white" ? "black" : "white")
+        ) {
+          setMatchStatus("lost");
+        }
+
+        totalMove = moves.length;
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    };
+
+    caller.get_caller_match().then((match: any[]) => {
+      if (match.length >= 1) {
+        setErrorText("Previous game session not finished");
+        return;
+      }
+
+      apiGetMe().then(async (user) => {
+        const matchServer = await apiCreateOrJoinRoom();
+
+        if (matchServer.match_id) {
+          const match = await caller.get_match(matchServer.match_id);
+          // console.log(match, match["black_player"]["id"].toText(), user["id"]);
+          let color: "white" | "black" = "white";
+
+          if (match["black_player"]["id"].toText() === user["id"]) {
+            setBoardOrientation("black");
+            color = "black";
+          }
+          setCanPlay(true);
+          setMatchId(matchServer.match_id);
+          startWatchingMatch(matchServer.match_id, color);
+        } else {
+          const interval = setInterval(async () => {
+            let match = await caller.get_caller_match();
+            console.log(match);
+            if (match.length >= 1) {
+              match = match[0];
+              let color: "white" | "black" = "white";
+
+              if (match["black_player"]["id"].toText() === user["id"]) {
+                color = "black";
+                setBoardOrientation("black");
+              }
+              setCanPlay(true);
+              setMatchId(match["id"]);
+              startWatchingMatch(match["id"], color);
+              clearInterval(interval);
+            }
+          }, 2000);
+        }
+      });
+    });
+  }, [caller]);
 
   const isMobile = useIsMobile();
 
   const handleSelfMove = async ({
     from_position,
     to_position,
-    piece,
   }: {
     from_position: string;
     to_position: string;
     piece: string;
   }) => {
-    console.log({ from_position, to_position, piece });
     new Audio("/audio/move.mp3").play();
+    console.log(
+      await caller.add_match_move(matchId, from_position, to_position, "0")
+    );
   };
 
   return (
-    <div className="flex flex-col lg:flex-row items-center justify-center w-full h-full mx-auto">
-      {isMobile ? (
-        <MobileLayout chessGame={chessGame} handleSelfMove={handleSelfMove} />
-      ) : (
-        <DesktopLayout chessGame={chessGame} handleSelfMove={handleSelfMove} />
+    <>
+      {errorText && (
+        <div className="fixed h-screen w-full top-0 right-0 bg-black/70 z-50 flex items-center">
+          <div className="w-full">
+            <p className="text-center text-2xl text-red-200 ">{errorText}</p>
+            <button
+              onClick={() => (window.location.href = "/")}
+              className="bg-blue-400 text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
+            >
+              Back
+            </button>
+          </div>
+        </div>
       )}
-    </div>
+      {!canPlay && !errorText && (
+        <div className="fixed h-screen w-full top-0 right-0 bg-black/70 z-50 flex items-center">
+          <div className="w-full">
+            <p className="text-center text-xl">Waiting opponent...</p>
+            <button
+              className="bg-red-400 text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
+              onClick={() => {
+                apiCancelRoom().then(() => {
+                  window.location.href = "/";
+                });
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      {matchStatus == "win" && (
+        <div className="fixed h-screen w-full top-0 right-0 bg-black opacity-70 z-50 flex items-center">
+          <div className="w-full">
+            <p className="text-center text-green-500 text-xl">Victory</p>
+            <button
+              onClick={() => (window.location.href = "/")}
+              className="bg-blue-400 text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
+            >
+              Back
+            </button>
+          </div>
+        </div>
+      )}
+      {matchStatus == "lose" && (
+        <div className="fixed h-screen w-full top-0 right-0 bg-black opacity-70 z-50 flex items-center">
+          <div className="w-full">
+            <p className="text-center text-red-500 text-xl">Defeat</p>
+            <button
+              onClick={() => (window.location.href = "/")}
+              className="bg-blue-400 text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
+            >
+              Back
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="flex flex-col lg:flex-row items-center justify-center w-full h-full mx-auto">
+        {isMobile ? (
+          <MobileLayout
+            boardOrientation={boardOrientation}
+            handleSelfMove={handleSelfMove}
+          />
+        ) : (
+          <DesktopLayout
+            boardOrientation={boardOrientation}
+            handleSelfMove={handleSelfMove}
+          />
+        )}
+      </div>
+    </>
   );
 };
 
-const MobileLayout: React.FC<LayoutProps> = ({ chessGame, handleSelfMove }) => {
+const MobileLayout: React.FC<LayoutProps> = ({
+  handleSelfMove,
+  boardOrientation,
+}) => {
   return (
     <div className="lg:hidden w-full mx-auto py-10 flex flex-col items-center p-0 space-x-4 space-y-4 min-h-screen">
       {/* PLAYER 1 */}
@@ -119,8 +294,7 @@ const MobileLayout: React.FC<LayoutProps> = ({ chessGame, handleSelfMove }) => {
 
       <div className="aspect-square w-full max-w-[700px] bg-white">
         <Board
-          boardOrientation="white"
-          chess={chessGame}
+          boardOrientation={boardOrientation}
           onSelfMove={handleSelfMove}
         />
       </div>
@@ -242,10 +416,7 @@ const MobileLayout: React.FC<LayoutProps> = ({ chessGame, handleSelfMove }) => {
   );
 };
 
-const DesktopLayout: React.FC<LayoutProps> = ({
-  chessGame,
-  handleSelfMove,
-}) => {
+const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
   return (
     <div className="hidden lg:flex items-center justify-center w-full h-full space-x-4">
       {/* LEFT - RESIGN */}
@@ -267,7 +438,6 @@ const DesktopLayout: React.FC<LayoutProps> = ({
         <Board
           // key={isMobile ? "mobile" : "desktop"}
           boardOrientation="white"
-          chess={chessGame}
           onSelfMove={handleSelfMove}
         />
       </div>

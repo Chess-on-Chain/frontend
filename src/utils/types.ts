@@ -1,7 +1,7 @@
 export type Player = {
   id: string | number;
   username: string;
-  rankScore: number;
+  rankScore: number | string;
   country: string;
 };
 
