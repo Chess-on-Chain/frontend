@@ -21,8 +21,6 @@ export const useCaller = () => {
       await agent.fetchRootKey();
     }
 
-    console.log(identity.getPrincipal().toString())
-
     const actor = Actor.createActor(idlFactory, {
       agent,
       canisterId: import.meta.env.VITE_COC_CANISTER_ID as string,

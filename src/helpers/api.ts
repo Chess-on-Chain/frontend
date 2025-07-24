@@ -25,7 +25,7 @@ interface ApiSuccess<T> {
   data: T;
 }
 
-interface User {
+export interface User {
   id: string
   username: string;
   first_name: string;
