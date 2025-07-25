@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 // import { Chess } from "chess.js";
 import Board from "../components/ui/common/board/Board";
 import { Flag } from "lucide-react";
@@ -8,15 +8,17 @@ import { useCaller } from "../hooks/canister";
 import {
   apiCancelRoom,
   apiCreateOrJoinRoom,
+  ApiError,
   apiGetMe,
   apiGetUser,
+  type RoomData,
   type User,
 } from "../helpers/api";
 import { BoardContext } from "../context/BoardContext";
 import { useIdentity } from "@nfid/identitykit/react";
 import { UserContext } from "../context/UserContext";
 import { MatchContext } from "../context/MatchContext";
-import { useMatchTimer } from "../hooks/timer";
+import { resetTimer, useMatchTimer } from "../hooks/timer";
 import { usePawnDawn } from "../hooks/pawnDawn";
 
 interface MoveData {
@@ -33,8 +35,25 @@ interface LayoutProps {
 const Gameplay = () => {
   const { setSelfColor } = useContext(MatchContext);
 
-  const [, setChessPosition, boardOrientation, setBoardOrientation] =
-    useContext(BoardContext);
+  const [
+    chessPosition,
+    setChessPosition,
+    boardOrientation,
+    setBoardOrientation,
+  ] = useContext(BoardContext);
+
+  const previousChessPosition = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (
+      chessPosition != previousChessPosition.current &&
+      previousChessPosition.current
+    ) {
+      new Audio("/audio/move.mp3").play().catch(() => {});
+    }
+
+    previousChessPosition.current = chessPosition;
+  }, [chessPosition]);
 
   useEffect(() => {
     setSelfColor && setSelfColor(boardOrientation);
@@ -97,7 +116,6 @@ const Gameplay = () => {
     };
 
     caller.get_caller_match().then(async (matchOpt: any[]) => {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
       if (matchOpt.length >= 1) {
         const user = await apiGetMe();
         let color: "white" | "black" = "white";
@@ -119,70 +137,94 @@ const Gameplay = () => {
         return;
       }
 
-      apiGetMe().then(async (user) => {
-        const matchServer = await apiCreateOrJoinRoom();
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+      apiGetMe()
+        .then(async (user) => {
+          let matchServer: RoomData | undefined;
 
-        if (matchServer.match_id) {
-          const match = await caller.get_match(matchServer.match_id);
-          setChessPosition(match.fen);
-
-          // console.log(match, match["black_player"]["id"].toText(), user["id"]);
-          let color: "white" | "black" = "white";
-
-          console.log(
-            user.id,
-            match.black_player.id.toText(),
-            match.white_player.id.toText()
-          );
-          if (match.black_player.id.toText() == user.id) {
-            setBoardOrientation("black");
-            color = "black";
-
-            setOpponentUser &&
-              setOpponentUser(await apiGetUser(match.white_player.id.toText()));
-          } else {
-            setOpponentUser &&
-              setOpponentUser(await apiGetUser(match.black_player.id.toText()));
+          try {
+            matchServer = await apiCreateOrJoinRoom();
+          } catch (e: any) {
+            if (e instanceof ApiError) {
+              setErrorText(e.detail);
+              return;
+            }
           }
 
-          setCanPlay(true);
-          setMatchId(matchServer.match_id);
-          startWatchingMatch(matchServer.match_id, color);
-        } else {
-          const interval = setInterval(async () => {
-            let match = await caller.get_caller_match();
-            // console.log(match);
-            if (match.length >= 1) {
-              match = match[0];
-              let color: "white" | "black" = "white";
-              console.log(
-                user.id,
-                match.black_player.id.toText(),
-                match.white_player.id.toText()
-              );
+          if (!matchServer) return;
 
-              if (match.black_player.id.toText() === user.id) {
-                color = "black";
-                setBoardOrientation("black");
+          await new Promise((resolve) => setTimeout(resolve, 2000));
 
-                setOpponentUser &&
-                  (await apiGetUser(match.white_player.id.toText()));
-              } else {
-                setOpponentUser &&
-                  setOpponentUser(
-                    await apiGetUser(match.black_player.id.toText())
-                  );
-              }
-              setCanPlay(true);
-              setChessPosition(match.fen);
-              setMatchId(match["id"]);
-              startWatchingMatch(match["id"], color);
-              clearInterval(interval);
+          if (matchServer.match_id) {
+            const match = await caller.get_match(matchServer.match_id);
+            setChessPosition(match.fen);
+
+            // console.log(match, match["black_player"]["id"].toText(), user["id"]);
+            let color: "white" | "black" = "white";
+
+            console.log(
+              user.id,
+              match.black_player.id.toText(),
+              match.white_player.id.toText()
+            );
+            if (match.black_player.id.toText() == user.id) {
+              setBoardOrientation("black");
+              color = "black";
+
+              setOpponentUser &&
+                setOpponentUser(
+                  await apiGetUser(match.white_player.id.toText())
+                );
+            } else {
+              setOpponentUser &&
+                setOpponentUser(
+                  await apiGetUser(match.black_player.id.toText())
+                );
             }
-          }, 2000);
-        }
-      });
+
+            setCanPlay(true);
+            setMatchId(matchServer.match_id);
+            resetTimer();
+            startWatchingMatch(matchServer.match_id, color);
+          } else {
+            const interval = setInterval(async () => {
+              let match = await caller.get_caller_match();
+              // console.log(match);
+              if (match.length >= 1) {
+                match = match[0];
+                let color: "white" | "black" = "white";
+                console.log(
+                  user.id,
+                  match.black_player.id.toText(),
+                  match.white_player.id.toText()
+                );
+
+                if (match.black_player.id.toText() === user.id) {
+                  color = "black";
+                  setBoardOrientation("black");
+
+                  setOpponentUser &&
+                    (await apiGetUser(match.white_player.id.toText()));
+                } else {
+                  setOpponentUser &&
+                    setOpponentUser(
+                      await apiGetUser(match.black_player.id.toText())
+                    );
+                }
+                setCanPlay(true);
+                setChessPosition(match.fen);
+                setMatchId(match.id);
+                resetTimer();
+                startWatchingMatch(match.id, color);
+                clearInterval(interval);
+              }
+            }, 2000);
+          }
+        })
+        .catch((e) => {
+          if (e instanceof ApiError) {
+            setErrorText(e.detail);
+          }
+        });
     });
 
     return () => {
@@ -200,7 +242,6 @@ const Gameplay = () => {
     to_position: string;
     piece: string;
   }) => {
-    new Audio("/audio/move.mp3").play();
     console.log(
       await caller.add_match_move(matchId, from_position, to_position, "0")
     );
@@ -318,7 +359,10 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
             Object.entries(opponentPawnDawn).map(
               ([piece, total]: [any, any]) => {
                 return (
-                  <div key={piece} className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                  <div
+                    key={piece}
+                    className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1"
+                  >
                     <span className="text-xs">{total}</span>{" "}
                     {pawnEmoji[piece][selfColor == "white" ? 1 : 0]}
                   </div>
@@ -349,7 +393,10 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
           {selfPawnDawn &&
             Object.entries(selfPawnDawn).map(([piece, total]: [any, any]) => {
               return (
-                <div key={piece} className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <div
+                  key={piece}
+                  className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1"
+                >
                   <span className="text-xs">{total}</span>{" "}
                   {pawnEmoji[piece][selfColor == "white" ? 0 : 1]}
                 </div>

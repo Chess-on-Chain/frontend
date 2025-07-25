@@ -34,7 +34,7 @@ export interface User {
   score: number;
 }
 
-interface RoomData {
+export interface RoomData {
   match_id: string;
   playerA: User;
   playerB: User | null;
