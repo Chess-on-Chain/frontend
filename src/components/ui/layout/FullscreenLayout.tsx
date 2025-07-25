@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { MatchContext } from "../../../context/MatchContext";
 // import { Chess } from "chess.js";
 import { useMatchTimer } from "../../../hooks/timer";
-import usePawnDawn from "../../../hooks/pawnDawn";
+import {usePawnDawn} from "../../../hooks/pawnDawn";
 
 // interface ColorDawn {
 //   b: number;

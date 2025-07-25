@@ -16,6 +16,8 @@ import { BoardContext } from "../context/BoardContext";
 import { useIdentity } from "@nfid/identitykit/react";
 import { UserContext } from "../context/UserContext";
 import { MatchContext } from "../context/MatchContext";
+import { useMatchTimer } from "../hooks/timer";
+import { usePawnDawn } from "../hooks/pawnDawn";
 
 interface MoveData {
   from_position: string;
@@ -279,6 +281,26 @@ const Gameplay = () => {
 
 const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
   const actor = useCaller();
+  const { self, opponent, selfColor } = useContext(MatchContext);
+  const { timeColor, timeLeft } = useMatchTimer();
+  const { selfPawnDawn, opponentPawnDawn } = usePawnDawn();
+
+  const [opponentColor, setOpponentColor] = useState<
+    "white" | "black" | undefined
+  >();
+
+  useEffect(() => {
+    setOpponentColor(selfColor == "white" ? "black" : "white");
+  }, [selfColor]);
+
+  const pawnEmoji: any = {
+    b: ["♗", "♝"],
+    k: ["♔", "♚"],
+    n: ["♘", "♞"],
+    p: ["♙", "♟"],
+    q: ["♕", "♛"],
+    r: ["♖", "♜"],
+  };
 
   return (
     <div className="lg:hidden w-full mx-auto py-10 flex flex-col items-center p-0 space-x-4 space-y-4 min-h-screen">
@@ -287,69 +309,26 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-full bg-secondary"></div>
           <div>
-            <p>@Username</p>
-            <p className="text-white/50">IDN</p>
+            <p>{opponent?.username || opponent?.first_name || "-"}</p>
+            <p className="text-white/50">{opponent?.country || "-"}</p>
           </div>
         </div>
         <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-1 px-2 text-sm">
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
+          {opponentPawnDawn &&
+            Object.entries(opponentPawnDawn).map(
+              ([piece, total]: [any, any]) => {
+                return (
+                  <div key={piece} className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                    <span className="text-xs">{total}</span>{" "}
+                    {pawnEmoji[piece][selfColor == "white" ? 1 : 0]}
+                  </div>
+                );
+              }
+            )}
         </div>
         {/* Timer Player 1 */}
         <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary text-white/50">
-          -:-
+          {timeColor == opponentColor ? timeLeft : "-:-"}
         </div>
       </div>
 
@@ -362,69 +341,24 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-full bg-secondary"></div>
           <div>
-            <p>@Username</p>
-            <p className="text-white/50">IDN</p>
+            <p>{self?.username || self?.first_name || "-"}</p>
+            <p className="text-white/50">{self?.country || "-"}</p>
           </div>
         </div>
         <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-1 px-2 text-sm">
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
+          {selfPawnDawn &&
+            Object.entries(selfPawnDawn).map(([piece, total]: [any, any]) => {
+              return (
+                <div key={piece} className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                  <span className="text-xs">{total}</span>{" "}
+                  {pawnEmoji[piece][selfColor == "white" ? 0 : 1]}
+                </div>
+              );
+            })}
         </div>
         {/* Timer Player 2 */}
         <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary">
-          0:20
+          {timeColor == selfColor ? timeLeft : "-:-"}
         </div>
       </div>
 

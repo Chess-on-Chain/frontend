@@ -24,7 +24,7 @@ interface ColorDawn {
   r: number;
 }
 
-export default () => {
+export const usePawnDawn = () => {
   const { selfColor } = useContext(MatchContext);
   const [chessPosition] = useContext(BoardContext);
 
