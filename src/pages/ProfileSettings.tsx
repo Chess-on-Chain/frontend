@@ -1,23 +1,35 @@
 import { Camera, ChevronDown } from "lucide-react";
-import { useContext, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
 import { apiUpdateUser } from "../helpers/api";
 
 const ProfileSettings = () => {
   const user = useContext(UserContext);
+  const navigate = useNavigate();
 
-  const [firstName, setFirstName] = useState<string | undefined>();
+  // const [firstName, setFirstName] = useState<string | undefined>();
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
+  const [country, setCountry] = useState<string>("");
 
   useEffect(() => {
-    setFirstName(user?.first_name);
+    setFirstName(user?.first_name ?? "");
+    setLastName(user?.last_name ?? "");
+    setCountry(user?.country ?? "INDONESIA");
   }, [user]);
 
-  const handleSaveAll = async () => {
+  const handleSaveAll = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     if (user?.id) {
       await apiUpdateUser(user?.id, {
         first_name: firstName,
+        last_name: lastName,
+        country: country,
       });
+
+      navigate("/profile");
     }
   };
 
@@ -35,7 +47,7 @@ const ProfileSettings = () => {
 
         <div>
           <div className="flex items-center gap-2 text-lg sm:text-xl lg:text-2xl font-semibold">
-            {user?.username ? "@" + user.username : "-"}{" "}
+            {user?.username ? "@" + user.username : user?.first_name}{" "}
             <span className="w-2 h-2 translate-y-0.5 bg-white/50 rounded-full" />
             <span className=" mt-1.5 text-sm sm:text-base lg:text-lg text-gray-400">
               {" "}
@@ -73,7 +85,7 @@ const ProfileSettings = () => {
                 name="usrname"
                 id="username"
                 className="w-full px-3 py-2 text-lg tracking-wide border border-white/20 text-white bg-black rounded disabled:bg-primary disabled:border-white/5"
-                defaultValue="Firman"
+                defaultValue="Anonymous"
                 disabled
               />
               <button
@@ -116,6 +128,8 @@ const ProfileSettings = () => {
               <input
                 type="text"
                 name="lastName"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 id="lastName"
                 className="w-full px-3 py-2 text-lg tracking-wide text-white bg-black border border-white/20 rounded"
               />
@@ -134,7 +148,8 @@ const ProfileSettings = () => {
                 name="country"
                 id="country"
                 className="w-full px-3 py-2 text-lg tracking-wide border border-white/20 bg-black text-white appearance-none"
-                defaultValue="Indonesia"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
               >
                 <option value="Indonesia">INDONESIA</option>
                 <option value="China">CHINA</option>
@@ -153,8 +168,9 @@ const ProfileSettings = () => {
             <button
               type="submit"
               className="px-6 py-2 text-base lg:text-xl font-semibold text-white bg-transparen border border-white/20 hover:bg-secondary rounded cursor-pointer"
+              onClick={() => navigate("/profile")}
             >
-              <Link to="/profile">Cancel</Link>
+              Cancel
             </button>
             <button
               onClick={handleSaveAll}
