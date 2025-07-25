@@ -18,7 +18,7 @@ import { BoardContext } from "../context/BoardContext";
 import { useIdentity } from "@nfid/identitykit/react";
 import { UserContext } from "../context/UserContext";
 import { MatchContext } from "../context/MatchContext";
-import { resetTimer, useMatchTimer } from "../hooks/timer";
+import { getTimerColorClass, resetTimer, useMatchTimer } from "../hooks/timer";
 import { usePawnDawn } from "../hooks/pawnDawn";
 
 interface MoveData {
@@ -371,8 +371,12 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
             )}
         </div>
         {/* Timer Player 1 */}
-        <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary text-white/50">
-          {timeColor == opponentColor ? timeLeft : "-:-"}
+        <div 
+          className={`ml-2 px-3 py-0.5 text-xl border 
+            ${timeColor === opponentColor ? getTimerColorClass(timeLeft) : "border-secondary text-white/50"}
+          `}
+        >
+          {timeColor === opponentColor ? timeLeft : "-:-"}
         </div>
       </div>
 
@@ -404,8 +408,11 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
             })}
         </div>
         {/* Timer Player 2 */}
-        <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary">
-          {timeColor == selfColor ? timeLeft : "-:-"}
+        <div 
+          className={`ml-2 px-3 py-0.5 text-xl border 
+            ${timeColor === selfColor ? getTimerColorClass(timeLeft) : "border-secondary text-white/50"} `}
+        >
+          {timeColor === selfColor ? timeLeft : "-:-"}
         </div>
       </div>
 
