@@ -18,14 +18,14 @@ export default function CardProfile({ data }: ProfileProps) {
           </span>
         </div>
         <div className="my-px lg:text-xl text-gray-400">
-          Score: <span className="text-white">100</span>
+          Score: <span className="text-white">{data.rankScore}</span>
         </div>
-        <div className="flex items-center gap-3 mt-3 w-fit text-sm lg:text-base">
+        {/* <div className="flex items-center gap-3 mt-3 w-fit text-sm lg:text-base">
           <span className="text-white font-semibold">Rank: </span>
           <span className="px-2 py-0 5 font-bold w-fit text-sm lg:text-xl bg-accent text-black rounded-sm">
             {data.rankScore}
           </span>
-        </div>
+        </div> */}
       </div>
     </div>
   );

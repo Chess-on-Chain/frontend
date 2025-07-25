@@ -14,6 +14,7 @@ import { useContext, useState } from "react";
 import { clearToken } from "./helpers/api";
 import ConnectSuccessContext from "./context/ConnectSuccessContext";
 import { UserProvider } from "./context/UserContext";
+import { MatchProvider } from "./context/MatchContext";
 
 function Provider({ children }: any) {
   const [isConnect, setIsConnect] = useState(false);
@@ -27,7 +28,7 @@ function Provider({ children }: any) {
 
 function Home() {
   const [, setIsConnect] = useContext(ConnectSuccessContext);
-    
+
   return (
     <IdentityKitProvider
       authType={IdentityKitAuthType.DELEGATION}
@@ -49,16 +50,28 @@ function Home() {
               <Route path="/gameplay/coming-soon" element={<ComingSoon />} />
             </Route>
 
-            <Route element={<FullscreenGameLayout />}>
-              <Route
-                path="/gameplay"
-                element={
+            {/* <Route
+              element={
+                <MatchProvider>
                   <BoardProvider>
-                    <Gameplay />
+                    <FullscreenGameLayout />
                   </BoardProvider>
-                }
-              />
-            </Route>
+                </MatchProvider>
+              }
+            > */}
+            <Route
+              path="/gameplay"
+              element={
+                <MatchProvider>
+                  <BoardProvider>
+                    <FullscreenGameLayout>
+                      <Gameplay />
+                    </FullscreenGameLayout>
+                  </BoardProvider>
+                </MatchProvider>
+              }
+            />
+            {/* </Route> */}
           </Routes>
         </Router>
       </UserProvider>
