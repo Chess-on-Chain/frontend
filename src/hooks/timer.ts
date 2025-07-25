@@ -2,6 +2,10 @@ import { useState, useRef, useEffect, useContext } from "react";
 import { BoardContext } from "../context/BoardContext";
 import { Chess } from "chess.js";
 
+export function resetTimer() {
+  localStorage.removeItem("countdown");
+}
+
 export function useMatchTimer(initialTime: number = 60) {
   const [timeLeft, setTimeLeft] = useState<number>(initialTime);
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -10,7 +14,11 @@ export function useMatchTimer(initialTime: number = 60) {
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
       intervalRef.current = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
+        setTimeLeft((prev) => {
+          const newPrev = prev - 1;
+          localStorage.setItem("countdown", newPrev.toString());
+          return newPrev;
+        });
       }, 1000);
     }
 
@@ -29,6 +37,15 @@ export function useMatchTimer(initialTime: number = 60) {
   }, [timeLeft]);
 
   const start = () => {
+    console.log("START");
+    const prevTime = localStorage.getItem("countdown");
+
+    if (prevTime) {
+      setTimeLeft(parseInt(prevTime));
+    }
+
+    localStorage.removeItem("countdown");
+
     if (timeLeft > 0) {
       setIsRunning(true);
     }
@@ -55,8 +72,7 @@ export function useMatchTimer(initialTime: number = 60) {
 
   useEffect(() => {
     if (
-      chessPosition ==
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" &&
+      chessPosition != "8/8/4K3/8/4k3/8/8/8 b - - 0 1" &&
       !timerStarted.current
     ) {
       timerStarted.current = true;
@@ -65,7 +81,7 @@ export function useMatchTimer(initialTime: number = 60) {
     }
 
     if (timerStarted.current) {
-      const chess = new Chess(chessPosition, {skipValidation: true});
+      const chess = new Chess(chessPosition, { skipValidation: true });
       const turn = chess.turn();
       setColor(turn == "w" ? "white" : "black");
       setTimeLeft(60);
