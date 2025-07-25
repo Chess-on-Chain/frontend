@@ -151,10 +151,10 @@ const ProfileSettings = () => {
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
               >
-                <option value="ID">INDONESIA</option>
-                <option value="CH">CHINA</option>
-                <option value="RU">RUSIA</option>
-                <option value="US">USA</option>
+                <option value="Indonesia">INDONESIA</option>
+                <option value="China">CHINA</option>
+                <option value="Rusia">RUSIA</option>
+                <option value="USA">USA</option>
               </select>
               <ChevronDown
                 className="absolute right-3 top-3 text-white pointer-events-none"

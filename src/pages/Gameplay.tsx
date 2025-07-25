@@ -103,12 +103,15 @@ const Gameplay = () => {
         }
 
         if (moves.length == totalMove) {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
           continue;
         }
 
         setChessPosition(match["fen"]);
 
         totalMove = moves.length;
+
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     };
 
@@ -148,6 +151,8 @@ const Gameplay = () => {
           }
 
           if (!matchServer) return;
+
+          await new Promise((resolve) => setTimeout(resolve, 2000));
 
           if (matchServer.match_id) {
             const match = await caller.get_match(matchServer.match_id);
@@ -212,7 +217,7 @@ const Gameplay = () => {
                 startWatchingMatch(match.id, color);
                 clearInterval(interval);
               }
-            }, 1500);
+            }, 2000);
           }
         })
         .catch((e) => {
@@ -237,17 +242,9 @@ const Gameplay = () => {
     to_position: string;
     piece: string;
   }) => {
-    try {
-      await caller.add_match_move(matchId, from_position, to_position, "0");
-    } catch (e: any) {
-      if (
-        e
-          .toString()
-          .includes("Langkah ini seharusnya promosi, tapi tidak diberikan")
-      ) {
-        await caller.add_match_move(matchId, from_position, to_position, "q");
-      }
-    }
+    console.log(
+      await caller.add_match_move(matchId, from_position, to_position, "0")
+    );
   };
 
   return (
@@ -374,13 +371,9 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
             )}
         </div>
         {/* Timer Player 1 */}
-        <div
+        <div 
           className={`ml-2 px-3 py-0.5 text-xl border 
-            ${
-              timeColor === opponentColor
-                ? getTimerColorClass(timeLeft)
-                : "border-secondary text-white/50"
-            }
+            ${timeColor === opponentColor ? getTimerColorClass(timeLeft) : "border-secondary text-white/50"}
           `}
         >
           {timeColor === opponentColor ? timeLeft : "-:-"}
@@ -415,13 +408,9 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
             })}
         </div>
         {/* Timer Player 2 */}
-        <div
+        <div 
           className={`ml-2 px-3 py-0.5 text-xl border 
-            ${
-              timeColor === selfColor
-                ? getTimerColorClass(timeLeft)
-                : "border-secondary text-white/50"
-            } `}
+            ${timeColor === selfColor ? getTimerColorClass(timeLeft) : "border-secondary text-white/50"} `}
         >
           {timeColor === selfColor ? timeLeft : "-:-"}
         </div>
