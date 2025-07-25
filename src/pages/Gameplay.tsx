@@ -1,12 +1,23 @@
-import { useContext, useEffect, useRef, useState } from "react";
-import { Chess } from "chess.js";
+import { useContext, useEffect, useState } from "react";
+// import { Chess } from "chess.js";
 import Board from "../components/ui/common/board/Board";
 import { Flag } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useCaller } from "../hooks/canister";
-import { apiCancelRoom, apiCreateOrJoinRoom, apiGetMe } from "../helpers/api";
+import {
+  apiCancelRoom,
+  apiCreateOrJoinRoom,
+  apiGetMe,
+  apiGetUser,
+  type User,
+} from "../helpers/api";
 import { BoardContext } from "../context/BoardContext";
+import { useIdentity } from "@nfid/identitykit/react";
+import { UserContext } from "../context/UserContext";
+import { MatchContext } from "../context/MatchContext";
+import { useMatchTimer } from "../hooks/timer";
+import { usePawnDawn } from "../hooks/pawnDawn";
 
 interface MoveData {
   from_position: string;
@@ -16,33 +27,40 @@ interface MoveData {
 
 interface LayoutProps {
   handleSelfMove: (move: MoveData) => Promise<void>;
-  boardOrientation: "white" | "black";
+  user: User;
 }
 
 const Gameplay = () => {
-  const [boardOrientation, setBoardOrientation] = useState<"white" | "black">(
-    "white"
-  );
+  const { setSelfColor } = useContext(MatchContext);
+
+  const [, setChessPosition, boardOrientation, setBoardOrientation] =
+    useContext(BoardContext);
+
+  useEffect(() => {
+    setSelfColor && setSelfColor(boardOrientation);
+  }, [boardOrientation]);
 
   const [matchId, setMatchId] = useState("");
   const [canPlay, setCanPlay] = useState(false);
-  const [errorText] = useState<string | undefined>();
+  const [errorText, setErrorText] = useState<string | undefined>();
 
   const [matchStatus, setMatchStatus] = useState("ongoing");
 
+  const user = useContext(UserContext);
+  // const [opponentUser, setOpponentUser] = useState<User | undefined>();
+  const { setOpponent: setOpponentUser } = useContext(MatchContext);
+
   const caller: any = useCaller();
 
-  const chessRef = useRef(new Chess());
-  const chessGame = chessRef.current;
-
-  const [, setChessPosition] = useContext(BoardContext);
+  // const chessRef = useRef(new Chess());
+  // const chessGame = chessRef.current;
+  const identity = useIdentity();
 
   useEffect(() => {
     let loaded = true;
-
     if (!caller) return;
 
-    setChessPosition(chessGame.fen());
+    // setChessPosition(chessGame.fen());
 
     const startWatchingMatch = async (
       x: string,
@@ -79,32 +97,55 @@ const Gameplay = () => {
     };
 
     caller.get_caller_match().then(async (matchOpt: any[]) => {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       if (matchOpt.length >= 1) {
         const user = await apiGetMe();
         let color: "white" | "black" = "white";
         const match = matchOpt[0];
-        if (match["black_player"]["id"].toText() === user.id) {
+        console.log(user, match["black_player"]["id"].toText());
+        if (match.black_player.id.toText() == user.id) {
           setBoardOrientation("black");
           color = "black";
         }
+        setChessPosition(match.fen);
         setCanPlay(true);
         setMatchId(match.id);
         startWatchingMatch(match.id, color);
         return;
       }
 
+      if (identity?.getPrincipal().isAnonymous()) {
+        setErrorText("Wallet is not connected properly");
+        return;
+      }
+
       apiGetMe().then(async (user) => {
         const matchServer = await apiCreateOrJoinRoom();
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         if (matchServer.match_id) {
           const match = await caller.get_match(matchServer.match_id);
+          setChessPosition(match.fen);
+
           // console.log(match, match["black_player"]["id"].toText(), user["id"]);
           let color: "white" | "black" = "white";
 
-          if (match.black_player.id.toText() === user.id) {
+          console.log(
+            user.id,
+            match.black_player.id.toText(),
+            match.white_player.id.toText()
+          );
+          if (match.black_player.id.toText() == user.id) {
             setBoardOrientation("black");
             color = "black";
+
+            setOpponentUser &&
+              setOpponentUser(await apiGetUser(match.white_player.id.toText()));
+          } else {
+            setOpponentUser &&
+              setOpponentUser(await apiGetUser(match.black_player.id.toText()));
           }
+
           setCanPlay(true);
           setMatchId(matchServer.match_id);
           startWatchingMatch(matchServer.match_id, color);
@@ -115,12 +156,26 @@ const Gameplay = () => {
             if (match.length >= 1) {
               match = match[0];
               let color: "white" | "black" = "white";
+              console.log(
+                user.id,
+                match.black_player.id.toText(),
+                match.white_player.id.toText()
+              );
 
-              if (match["black_player"]["id"].toText() === user["id"]) {
+              if (match.black_player.id.toText() === user.id) {
                 color = "black";
                 setBoardOrientation("black");
+
+                setOpponentUser &&
+                  (await apiGetUser(match.white_player.id.toText()));
+              } else {
+                setOpponentUser &&
+                  setOpponentUser(
+                    await apiGetUser(match.black_player.id.toText())
+                  );
               }
               setCanPlay(true);
+              setChessPosition(match.fen);
               setMatchId(match["id"]);
               startWatchingMatch(match["id"], color);
               clearInterval(interval);
@@ -186,7 +241,9 @@ const Gameplay = () => {
       {matchStatus == "win" && (
         <div className="fixed h-screen w-full top-0 right-0 bg-black/70 z-50 flex items-center">
           <div className="w-full space-y-8">
-            <p className="text-center text-white font-medium text-3xl sm:text-5xl leading-20 sm:leading-24 bg-linear-to-l from-white/0 from-20% via-[#fdda13bb] via-50% to-white/0 to-80%">Victory</p>
+            <p className="text-center text-white font-medium text-3xl sm:text-5xl leading-20 sm:leading-24 bg-linear-to-l from-white/0 from-20% via-[#fdda13bb] via-50% to-white/0 to-80%">
+              Victory
+            </p>
             <button
               onClick={() => (window.location.href = "/")}
               className="bg-secondary text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
@@ -199,7 +256,9 @@ const Gameplay = () => {
       {matchStatus == "lose" && (
         <div className="fixed h-screen w-full top-0 right-0 bg-black/70 z-50 flex items-center">
           <div className="w-full space-y-8">
-            <p className="text-center text-white font-medium tracking-wide text-3xl sm:text-5xl leading-20 sm:leading-24 bg-linear-to-l from-white/10 from-0% via-red-600 via-20% to-white/10 to-100%">Defeat</p>
+            <p className="text-center text-white font-medium tracking-wide text-3xl sm:text-5xl leading-20 sm:leading-24 bg-linear-to-l from-white/10 from-0% via-red-600 via-20% to-white/10 to-100%">
+              Defeat
+            </p>
             <button
               onClick={() => (window.location.href = "/")}
               className="bg-secondary text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
@@ -211,25 +270,38 @@ const Gameplay = () => {
       )}
       <div className="flex flex-col lg:flex-row items-center justify-center w-full h-full mx-auto">
         {isMobile ? (
-          <MobileLayout
-            boardOrientation={boardOrientation}
-            handleSelfMove={handleSelfMove}
-          />
+          <MobileLayout user={user as User} handleSelfMove={handleSelfMove} />
         ) : (
-          <DesktopLayout
-            boardOrientation={boardOrientation}
-            handleSelfMove={handleSelfMove}
-          />
+          <DesktopLayout user={user as User} handleSelfMove={handleSelfMove} />
         )}
       </div>
     </>
   );
 };
 
-const MobileLayout: React.FC<LayoutProps> = ({
-  handleSelfMove,
-  boardOrientation,
-}) => {
+const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
+  const actor = useCaller();
+  const { self, opponent, selfColor } = useContext(MatchContext);
+  const { timeColor, timeLeft } = useMatchTimer();
+  const { selfPawnDawn, opponentPawnDawn } = usePawnDawn();
+
+  const [opponentColor, setOpponentColor] = useState<
+    "white" | "black" | undefined
+  >();
+
+  useEffect(() => {
+    setOpponentColor(selfColor == "white" ? "black" : "white");
+  }, [selfColor]);
+
+  const pawnEmoji: any = {
+    b: ["♗", "♝"],
+    k: ["♔", "♚"],
+    n: ["♘", "♞"],
+    p: ["♙", "♟"],
+    q: ["♕", "♛"],
+    r: ["♖", "♜"],
+  };
+
   return (
     <div className="lg:hidden w-full mx-auto py-10 flex flex-col items-center p-0 space-x-4 space-y-4 min-h-screen">
       {/* PLAYER 1 */}
@@ -237,75 +309,31 @@ const MobileLayout: React.FC<LayoutProps> = ({
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-full bg-secondary"></div>
           <div>
-            <p>@Username</p>
-            <p className="text-white/50">IDN</p>
+            <p>{opponent?.username || opponent?.first_name || "-"}</p>
+            <p className="text-white/50">{opponent?.country || "-"}</p>
           </div>
         </div>
         <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-1 px-2 text-sm">
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
+          {opponentPawnDawn &&
+            Object.entries(opponentPawnDawn).map(
+              ([piece, total]: [any, any]) => {
+                return (
+                  <div key={piece} className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                    <span className="text-xs">{total}</span>{" "}
+                    {pawnEmoji[piece][selfColor == "white" ? 1 : 0]}
+                  </div>
+                );
+              }
+            )}
         </div>
         {/* Timer Player 1 */}
-        <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary text-white/50">-:-</div>
+        <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary text-white/50">
+          {timeColor == opponentColor ? timeLeft : "-:-"}
+        </div>
       </div>
 
       <div className="aspect-square w-full max-w-[700px] bg-white">
-        <Board
-          boardOrientation={boardOrientation}
-          onSelfMove={handleSelfMove}
-        />
+        <Board onSelfMove={handleSelfMove} />
       </div>
 
       {/* PLAYER 2 */}
@@ -313,80 +341,42 @@ const MobileLayout: React.FC<LayoutProps> = ({
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-full bg-secondary"></div>
           <div>
-            <p>@Username</p>
-            <p className="text-white/50">IDN</p>
+            <p>{self?.username || self?.first_name || "-"}</p>
+            <p className="text-white/50">{self?.country || "-"}</p>
           </div>
         </div>
         <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-1 px-2 text-sm">
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♞
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            <span className="text-xs">+2</span> ♖
-          </div>
-          <div className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
-            ♙
-          </div>
+          {selfPawnDawn &&
+            Object.entries(selfPawnDawn).map(([piece, total]: [any, any]) => {
+              return (
+                <div key={piece} className="bg-white/10 border border-white/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                  <span className="text-xs">{total}</span>{" "}
+                  {pawnEmoji[piece][selfColor == "white" ? 0 : 1]}
+                </div>
+              );
+            })}
         </div>
         {/* Timer Player 2 */}
-        <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary">0:20</div>
+        <div className="ml-2 px-3 pt-0.5 text-xl border border-secondary">
+          {timeColor == selfColor ? timeLeft : "-:-"}
+        </div>
       </div>
 
       {/* RESIGN BUTTON */}
       <div className="flex justify-center items-center w-full my-8">
-        <div className="text-center">
+        <button
+          className="text-center block"
+          onClick={() => {
+            actor.resign();
+          }}
+        >
           <div className="p-3.5 rounded-full mb-1 5 mx-auto bg-secondary">
-            <Link to="/">
-              <Flag size={24} className="text-black" />
-            </Link>
+            {/* <Link to="/"> */}
+            <Flag size={24} className="text-black" />
+            {/* </Link> */}
           </div>
           <p className="text-white">Resign</p>
-        </div>
+        </button>
       </div>
 
       {/* SCORE BOTTOM */}
@@ -427,19 +417,26 @@ const MobileLayout: React.FC<LayoutProps> = ({
 };
 
 const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
+  const actor = useCaller();
+
   return (
     <div className="hidden lg:flex items-center justify-center w-full h-full space-x-4">
       {/* LEFT - RESIGN */}
       <div className="flex-1 h-full flex justify-center">
         <div className="flex justify-center items-center w-full lg:w-3/5 h-full">
-          <div className="mx-auto text-center">
+          <button
+            className="mx-auto text-center block"
+            onClick={() => {
+              actor && actor.resign();
+            }}
+          >
             <div className="p-4.5 mx-auto rounded-full mb-1 5 bg-secondary">
               <Link to="/">
                 <Flag size={24} className="text-black" />
               </Link>
             </div>
             <p className="text-lg tracking-wide text-white">Resign</p>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -447,7 +444,6 @@ const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
       <div className="aspect-square w-full max-w-[700px] bg-white">
         <Board
           // key={isMobile ? "mobile" : "desktop"}
-          boardOrientation="white"
           onSelfMove={handleSelfMove}
         />
       </div>

@@ -1,7 +1,26 @@
 import { Camera, ChevronDown } from "lucide-react";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { UserContext } from "../context/UserContext";
+import { apiUpdateUser } from "../helpers/api";
 
 const ProfileSettings = () => {
+  const user = useContext(UserContext);
+
+  const [firstName, setFirstName] = useState<string | undefined>();
+
+  useEffect(() => {
+    setFirstName(user?.first_name);
+  }, [user]);
+
+  const handleSaveAll = async () => {
+    if (user?.id) {
+      await apiUpdateUser(user?.id, {
+        first_name: firstName,
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen w-full lg:max-w-7xl px-6 py-10 text-white">
       <div className="mb-10 text-2xl font-semibold">Profile Settings</div>
@@ -16,22 +35,22 @@ const ProfileSettings = () => {
 
         <div>
           <div className="flex items-center gap-2 text-lg sm:text-xl lg:text-2xl font-semibold">
-            @Username{" "}
+            {user?.username ? "@" + user.username : "-"}{" "}
             <span className="w-2 h-2 translate-y-0.5 bg-white/50 rounded-full" />
             <span className=" mt-1.5 text-sm sm:text-base lg:text-lg text-gray-400">
               {" "}
-              IDN
+              {user?.country || "-"}
             </span>
           </div>
           <div className="lg:text-xl text-gray-400">
-            Score: <span className="text-white">100</span>
+            Score: <span className="text-white">{user?.score || "NaN"}</span>
           </div>
-          <div className="flex items-center gap-3 mt-3 w-fit text-sm lg:text-base">
+          {/* <div className="flex items-center gap-3 mt-3 w-fit text-sm lg:text-base">
             <span className="text-white font-semibold">Rank: </span>
             <span className="px-2 py-0 5 font-bold w-fit text-sm lg:text-xl bg-accent text-black rounded-sm">
               500
             </span>
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -42,7 +61,10 @@ const ProfileSettings = () => {
         <h2 className="text-xl sm:text-2xl font-semibold mb-4">Details</h2>
         <form action="" className="space-y-4 w-full lg:max-w-2xl">
           <div className="flex items-center space-x-11">
-            <label htmlFor="username" className="block text-lg sm:text-xl text-gray-400 mb-xl">
+            <label
+              htmlFor="username"
+              className="block text-lg sm:text-xl text-gray-400 mb-xl"
+            >
               Username
             </label>
             <div className="flex-1 flex items-center space-x-4">
@@ -75,6 +97,8 @@ const ProfileSettings = () => {
               <input
                 type="text"
                 name="firstName"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
                 id="firstName"
                 className="w-full px-3 py-2 text-lg tracking-wide text-white bg-black border border-white/20 rounded"
               />
@@ -82,7 +106,10 @@ const ProfileSettings = () => {
           </div>
 
           <div className="flex items-center space-x-9">
-            <label htmlFor="lastName" className="block mb-1 text-lg sm:text-xl text-gray-400">
+            <label
+              htmlFor="lastName"
+              className="block mb-1 text-lg sm:text-xl text-gray-400"
+            >
               Last Name
             </label>
             <div className="flex-1 flex items-center">
@@ -96,7 +123,10 @@ const ProfileSettings = () => {
           </div>
 
           <div className="flex items-center space-x-14 text-white">
-            <label htmlFor="country" className="block mb-1 text-lg sm:text-xl text-gray-400">
+            <label
+              htmlFor="country"
+              className="block mb-1 text-lg sm:text-xl text-gray-400"
+            >
               Country
             </label>
             <div className="relative flex-1 flex items-center">
@@ -124,12 +154,11 @@ const ProfileSettings = () => {
               type="submit"
               className="px-6 py-2 text-base lg:text-xl font-semibold text-white bg-transparen border border-white/20 hover:bg-secondary rounded cursor-pointer"
             >
-              <Link to="/profile">
-                Cancel
-              </Link>
+              <Link to="/profile">Cancel</Link>
             </button>
             <button
-              type="submit"
+              onClick={handleSaveAll}
+              // type="submit"
               className="px-6 py-2 text-base lg:text-xl font-semibold text-black bg-secondary hover:bg-secondary rounded cursor-pointer"
             >
               Save All

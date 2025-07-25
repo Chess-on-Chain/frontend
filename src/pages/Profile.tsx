@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
   BtnEditProfile,
   CardHistory,
@@ -24,8 +24,11 @@ const Profile = () => {
   const caller = useCaller();
 
   const user = useContext(UserContext);
+  const loaded = useRef(false);
 
   useEffect(() => {
+    if (loaded.current) return;
+
     if (user) {
       setDataProfiles({
         country: user.country || "-",
@@ -38,6 +41,8 @@ const Profile = () => {
     if (!auth.user) {
       return;
     }
+    
+    loaded.current = true;
 
     caller
       .get_histories(auth.user.principal, 0, 20)

@@ -8,10 +8,8 @@ import {
 import { BoardContext } from "../../../../context/BoardContext";
 
 export default function Board({
-  boardOrientation,
   onSelfMove,
 }: {
-  boardOrientation: "black" | "white";
   onSelfMove: ({
     from_position,
     to_position,
@@ -25,6 +23,12 @@ export default function Board({
   const [chessPosition, setChessPosition] = useContext(BoardContext);
   const [moveFrom, setMoveFrom] = useState("");
   const [optionSquares, setOptionSquares] = useState({});
+
+  // useEffect(() => {
+  //   console.log({ chessPosition }, "s");
+  // }, [chessPosition]);
+
+  const [, , boardOrientation] = useContext(BoardContext);
 
   const chessGame = new Chess(chessPosition);
 
