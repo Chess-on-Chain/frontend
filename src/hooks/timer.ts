@@ -93,3 +93,9 @@ export function useMatchTimer(initialTime: number = 60) {
     timeColor: color,
   };
 }
+
+export function getTimerColorClass(time: number) {
+  if (time <= 10) return "text-red-500 border-red-500";
+  if (time <= 30) return "text-yellow-500 border-yellow-500";
+  return "text-green-400 border-green-400";
+}
