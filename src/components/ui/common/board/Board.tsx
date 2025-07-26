@@ -1,5 +1,5 @@
 import { Chess, type Square } from "chess.js";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
   Chessboard,
   defaultPieces,
@@ -24,9 +24,28 @@ export default function Board({
   const [moveFrom, setMoveFrom] = useState("");
   const [optionSquares, setOptionSquares] = useState({});
 
-  // useEffect(() => {
-  //   console.log({ chessPosition }, "s");
-  // }, [chessPosition]);
+  const optionSquaresPersist = useRef<Record<string, React.CSSProperties>>({});
+
+  useEffect(() => {
+    const currentKingSquare = chessGame.findPiece({
+      type: "k",
+      color: chessGame.turn(),
+    })[0];
+
+    if (chessGame.isCheckmate()) {
+      optionSquaresPersist.current[currentKingSquare] = {
+        background: "rgba(161, 11, 33, 1)",
+      };
+    } else if (chessGame.isCheck()) {
+      optionSquaresPersist.current[currentKingSquare] = {
+        background: "rgba(187, 11, 33, 0.7)",
+      };
+    } else {
+      optionSquaresPersist.current = {};
+    }
+
+    setOptionSquares(optionSquaresPersist.current);
+  }, [chessPosition]);
 
   const [, , boardOrientation] = useContext(BoardContext);
 
@@ -44,7 +63,7 @@ export default function Board({
 
     // if no moves, clear the option squares
     if (moves.length === 0) {
-      setOptionSquares({});
+      setOptionSquares(optionSquaresPersist.current);
       return false;
     }
 
@@ -69,10 +88,8 @@ export default function Board({
       background: "rgba(255, 255, 0, 0.4)",
     };
 
-    // set the option squares
-    setOptionSquares(newSquares);
+    setOptionSquares({ ...optionSquaresPersist, ...newSquares });
 
-    // return true to indicate that there are move options
     return true;
   }
 

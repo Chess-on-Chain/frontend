@@ -1,10 +1,10 @@
-import { Home } from "lucide-react";
+import { Home, Timer } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MatchContext } from "../../../context/MatchContext";
 // import { Chess } from "chess.js";
-import { useMatchTimer } from "../../../hooks/timer";
-import {usePawnDawn} from "../../../hooks/pawnDawn";
+import { getTimerColorClass, useMatchTimer } from "../../../hooks/timer";
+import { usePawnDawn } from "../../../hooks/pawnDawn";
 
 // interface ColorDawn {
 //   b: number;
@@ -76,15 +76,29 @@ const FullscreenGameLayout = ({ children }: any) => {
 
           {/* Tengah */}
           <div className="flex col-auto justify-center items-center space-x-10 text-white">
-            <div className="time-player1 text-5xl italic text-white">
-              {timeColor == selfColor ? timeLeft : "-:-"}
+            <div
+              className={`time-player1 text-5xl italic text-white ${
+                timeColor === selfColor
+                  ? getTimerColorClass(timeLeft)
+                  : "border-secondary text-white/50"
+              }`}
+            >
+              {/* {timeColor == selfColor ? timeLeft : "-:-"} */}
+              <Timer />
             </div>
             <div className="text-white flex flex-col items-center">
               <div className="text-2xl font-semibold">⏱</div>
               <div className="text-white/60 text-sm italic">Time Match</div>
             </div>
-            <div className="time-player2 text-white/50 text-5xl italic">
-              {timeColor == opponentColor ? timeLeft : "-:-"}
+            <div
+              className={`time-player2 text-5xl italic text-white ${
+                timeColor === opponentColor
+                  ? getTimerColorClass(timeLeft)
+                  : "border-secondary text-white/50"
+              }`}
+            >
+              {/* {timeColor == opponentColor ? timeLeft : "-:-"} */}
+              <Timer />
             </div>
           </div>
 

@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 // import { Chess } from "chess.js";
 import Board from "../components/ui/common/board/Board";
-import { Flag } from "lucide-react";
+import { Flag, Timer } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useCaller } from "../hooks/canister";
@@ -383,7 +383,8 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
             }
           `}
         >
-          {timeColor === opponentColor ? timeLeft : "-:-"}
+          {/* {timeColor === opponentColor ? timeLeft : "-:-"} */}
+          <Timer />
         </div>
       </div>
 
@@ -423,7 +424,8 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
                 : "border-secondary text-white/50"
             } `}
         >
-          {timeColor === selfColor ? timeLeft : "-:-"}
+          {/* {timeColor === selfColor ? timeLeft : "-:-"} */}
+          <Timer />
         </div>
       </div>
 
