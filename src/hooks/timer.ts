@@ -37,7 +37,6 @@ export function useMatchTimer(initialTime: number = 60) {
   }, [timeLeft]);
 
   const start = () => {
-    console.log("START");
     const prevTime = localStorage.getItem("countdown");
 
     if (prevTime) {
@@ -95,7 +94,8 @@ export function useMatchTimer(initialTime: number = 60) {
 }
 
 export function getTimerColorClass(time: number) {
-  if (time <= 10) return "text-red-500 border-red-500";
-  if (time <= 30) return "text-yellow-500 border-yellow-500";
-  return "text-green-400 border-green-400";
+  if (time <= 12) return "text-white bg-red-500 font-bold p-3 text-2xl";
+  if (time <= 30) return "text-white bg-yellow-500 font-bold p-3 text-2xl";
+  if (time <= 58) return "text-white bg-green-400 font-bold p-3 text-2xl";
+  return "text-white bg-blue-300 font-bold p-3 text-2xl";
 }
