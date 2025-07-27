@@ -1,9 +1,5 @@
-import { Link } from "react-router-dom";
+import { ConnectWallet } from "@nfid/identitykit/react";
 
 export default function ConnectWalletBtn() {
-  return (
-    <button className="connect-btn">
-        <Link to="/" className="font-semibold text-xl tracking-tight">Connect to Wallet</Link>
-    </button>
-  );
+  return <ConnectWallet />;
 }
