@@ -34,6 +34,10 @@ function Home() {
       authType={IdentityKitAuthType.DELEGATION}
       signerClientOptions={{
         targets: (import.meta.env.VITE_CANISTER_TARGET as string).split(","),
+        idleOptions: {
+          disableIdle: true,
+        },
+        maxTimeToLive: 7200000000000n,
       }}
       onDisconnect={() => clearToken()}
       onConnectSuccess={() => {

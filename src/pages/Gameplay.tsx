@@ -87,18 +87,25 @@ const Gameplay = () => {
     ) => {
       let totalMove = 0;
       while (loaded) {
-        const match = await caller.get_match(x);
+        let match;
+
+        try {
+          match = await caller.get_match(x);
+        } catch (e) {
+          continue;
+        }
+
         const moves: any[] = match["moves"];
 
         if (match["winner"] == orientation) {
+          setChessPosition(match.fen);
           setMatchStatus("win");
-          setChessPosition(match["fen"]);
           break;
         } else if (
           match["winner"] == (orientation == "white" ? "black" : "white")
         ) {
+          setChessPosition(match.fen);
           setMatchStatus("lose");
-          setChessPosition(match["fen"]);
           break;
         }
 
@@ -106,9 +113,11 @@ const Gameplay = () => {
           continue;
         }
 
-        setChessPosition(match["fen"]);
+        setChessPosition(match.fen);
 
         totalMove = moves.length;
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     };
 
