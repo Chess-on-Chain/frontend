@@ -9,6 +9,7 @@ export { default as BtnEditProfile } from "./button/BtnEditProfile"
 export { default as CardHistory } from "./cards/card-history"
 export { default as ProfileDashboard } from "./cards/card-profiles/profile-dashboard"
 export { default as CardProfile } from "./cards/card-profiles/profile"
+export { default as CardShare } from "./cards/card-share"
 
 // Navigations
 export { default as BottomTabs } from "./navigation/bottomTabs"
