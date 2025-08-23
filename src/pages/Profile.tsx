@@ -1,11 +1,11 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   BtnEditProfile,
   CardHistory,
   CardProfile,
 } from "../components/ui/common";
 import type { GameHistory, Player } from "../utils/types";
-import { useAuth } from "@nfid/identitykit/react";
+import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import { useCaller } from "../hooks/canister";
 import { UserContext } from "../context/UserContext";
 
@@ -19,16 +19,13 @@ const dataProfile = {
 const Profile = () => {
   const [lists, setLists] = useState<GameHistory[]>([]);
   const [dataProfiles, setDataProfiles] = useState<Player>(dataProfile);
-  // const loaded = useRef(false);
   const auth = useAuth();
   const caller = useCaller();
 
   const user = useContext(UserContext);
-  const loaded = useRef(false);
+  const identity = useIdentity();
 
   useEffect(() => {
-    if (loaded.current) return;
-
     if (user) {
       setDataProfiles({
         country: user.country || "-",
@@ -38,15 +35,15 @@ const Profile = () => {
       });
     }
 
-    if (!auth.user) {
+    if (!auth.user || !identity) {
       return;
     }
-    
-    loaded.current = true;
 
-    caller
-      .get_histories(auth.user.principal, 0, 20)
-      .then((histories: any[]) => {
+    caller?.get_histories(identity.getPrincipal(), 0n, 50n).then((response) => {
+      const result: GameHistory[] = [];
+
+      if ("ok" in response) {
+        const histories = response.ok;
         const result: GameHistory[] = [];
         for (const history of histories.reverse()) {
           const date = new Date(Number(history.time / BigInt(10 ** 6)));
@@ -95,23 +92,23 @@ const Profile = () => {
           }
 
           result.push({
-            id: history.id,
+            id: history.id.toString(),
             date: dateString,
             moves: history.moves.length,
             players: [],
             result: status,
           });
         }
+      }
 
-        setLists(result);
-      });
+      setLists(result);
+    });
 
     return () => {
       console.log("clean up");
     };
-  }, [user, auth]);
+  }, [user]);
 
-  console.log(lists);
   return (
     <div className="profile-content">
       <div className="content">

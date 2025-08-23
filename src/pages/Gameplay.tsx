@@ -5,21 +5,15 @@ import { Flag, Timer } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useCaller } from "../hooks/canister";
-import {
-  apiCancelRoom,
-  apiCreateOrJoinRoom,
-  ApiError,
-  apiGetMe,
-  apiGetUser,
-  type RoomData,
-  type User,
-} from "../helpers/api";
+import { apiGetUser, type User } from "../helpers/api";
 import { BoardContext } from "../context/BoardContext";
 import { useIdentity } from "@nfid/identitykit/react";
 import { UserContext } from "../context/UserContext";
 import { MatchContext } from "../context/MatchContext";
 import { getTimerColorClass, resetTimer, useMatchTimer } from "../hooks/timer";
 import { usePawnDawn } from "../hooks/pawnDawn";
+import type { Principal } from "@dfinity/principal";
+import type { MatchResultHistory } from "../helpers/canister_factory/contract.did";
 
 interface MoveData {
   from_position: string;
@@ -42,199 +36,259 @@ const Gameplay = () => {
     setBoardOrientation,
   ] = useContext(BoardContext);
 
-  const previousChessPosition = useRef<string | undefined>(undefined);
+  // const previousChessPosition = useRef<string | undefined>(undefined);
 
-  useEffect(() => {
-    if (
-      chessPosition != previousChessPosition.current &&
-      previousChessPosition.current
-    ) {
-      new Audio("/audio/move.mp3").play().catch(() => {});
-    }
+  // useEffect(() => {
+  //   if (
+  //     chessPosition != previousChessPosition.current &&
+  //     previousChessPosition.current
+  //   ) {
+  //     new Audio("/audio/move.mp3").play().catch(() => {});
+  //   }
 
-    previousChessPosition.current = chessPosition;
-  }, [chessPosition]);
+  //   previousChessPosition.current = chessPosition;
+  // }, [chessPosition]);
 
-  useEffect(() => {
-    setSelfColor && setSelfColor(boardOrientation);
-  }, [boardOrientation]);
-
-  const [matchId, setMatchId] = useState("");
+  const [matchId, setMatchId] = useState<bigint>(0n);
   const [canPlay, setCanPlay] = useState(false);
   const [errorText, setErrorText] = useState<string | undefined>();
+  const loaded = useRef(false);
 
   const [matchStatus, setMatchStatus] = useState("ongoing");
 
   const user = useContext(UserContext);
-  // const [opponentUser, setOpponentUser] = useState<User | undefined>();
   const { setOpponent: setOpponentUser } = useContext(MatchContext);
 
-  const caller: any = useCaller();
-
-  // const chessRef = useRef(new Chess());
-  // const chessGame = chessRef.current;
+  const actor = useCaller();
   const identity = useIdentity();
 
-  useEffect(() => {
-    let loaded = true;
-    if (!caller) return;
-
-    // setChessPosition(chessGame.fen());
-
-    const startWatchingMatch = async (
-      x: string,
-      orientation: "black" | "white"
-    ) => {
-      let totalMove = 0;
-      while (loaded) {
-        let match;
-
-        try {
-          match = await caller.get_match(x);
-        } catch (e) {
-          continue;
-        }
-
-        const moves: any[] = match["moves"];
-
-        if (match["winner"] == orientation) {
-          setChessPosition(match.fen);
-          setMatchStatus("win");
-          break;
-        } else if (
-          match["winner"] == (orientation == "white" ? "black" : "white")
-        ) {
-          setChessPosition(match.fen);
-          setMatchStatus("lose");
-          break;
-        }
-
-        if (moves.length == totalMove) {
-          continue;
-        }
-
-        setChessPosition(match.fen);
-
-        totalMove = moves.length;
-
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+  const init = async (caller: Principal) => {
+    const match = await actor?.get_active_match(caller);
+    if (match) {
+      if ("ok" in match) {
+        await on_match_exists(caller, match.ok);
+        return;
       }
-    };
+    }
 
-    caller.get_caller_match().then(async (matchOpt: any[]) => {
-      if (matchOpt.length >= 1) {
-        const user = await apiGetMe();
-        let color: "white" | "black" = "white";
-        const match = matchOpt[0];
-        console.log(user, match["black_player"]["id"].toText());
-        if (match.black_player.id.toText() == user.id) {
+    await on_create_match(caller);
+  };
+
+  const on_create_match = async (caller: Principal) => {
+    const result = await actor?.make_match(true);
+
+    if (result && "ok" in result) {
+      if ("match" in result.ok) {
+        const match = result.ok.match;
+
+        setMatchId(match.id);
+        let opponent_principal = match.white_player;
+
+        if (match.white_player == caller) {
+          setBoardOrientation("white");
+          opponent_principal = match.black_player;
+        } else {
           setBoardOrientation("black");
-          color = "black";
         }
+
+        let opponent_user = await apiGetUser(opponent_principal);
+        setOpponentUser(opponent_user);
         setChessPosition(match.fen);
         setCanPlay(true);
-        setMatchId(match.id);
-        startWatchingMatch(match.id, color);
         return;
       }
+      // if ('text' in result.ok) {
 
-      if (identity?.getPrincipal().isAnonymous()) {
-        setErrorText("Wallet is not connected properly");
-        return;
-      }
+      // };
+    }
 
-      apiGetMe()
-        .then(async (user) => {
-          let matchServer: RoomData | undefined;
+    if (result && "err" in result) {
+      setErrorText(result.err);
+    }
+  };
 
-          try {
-            matchServer = await apiCreateOrJoinRoom();
-          } catch (e: any) {
-            if (e instanceof ApiError) {
-              setErrorText(e.detail);
-              return;
-            }
-          }
+  const on_match_exists = async (
+    caller: Principal,
+    match: MatchResultHistory
+  ) => {
+    setMatchId(match.id);
 
-          if (!matchServer) return;
+    let opponent_principal = match.white_player;
 
-          if (matchServer.match_id) {
-            const match = await caller.get_match(matchServer.match_id);
-            setChessPosition(match.fen);
+    if (match.white_player == caller) {
+      setBoardOrientation("white");
+      opponent_principal = match.black_player;
+    } else {
+      setBoardOrientation("black");
+    }
 
-            // console.log(match, match["black_player"]["id"].toText(), user["id"]);
-            let color: "white" | "black" = "white";
+    let opponent_user = await apiGetUser(opponent_principal);
+    setOpponentUser(opponent_user);
 
-            console.log(
-              user.id,
-              match.black_player.id.toText(),
-              match.white_player.id.toText()
-            );
-            if (match.black_player.id.toText() == user.id) {
-              setBoardOrientation("black");
-              color = "black";
+    let current_fen = match.moves.reverse()[0].fen; // last moves
+    setChessPosition(current_fen);
+    setCanPlay(true);
+  };
 
-              setOpponentUser &&
-                setOpponentUser(
-                  await apiGetUser(match.white_player.id.toText())
-                );
-            } else {
-              setOpponentUser &&
-                setOpponentUser(
-                  await apiGetUser(match.black_player.id.toText())
-                );
-            }
-
-            setCanPlay(true);
-            setMatchId(matchServer.match_id);
-            resetTimer();
-            startWatchingMatch(matchServer.match_id, color);
-          } else {
-            const interval = setInterval(async () => {
-              let match = await caller.get_caller_match();
-              // console.log(match);
-              if (match.length >= 1) {
-                match = match[0];
-                let color: "white" | "black" = "white";
-                console.log(
-                  user.id,
-                  match.black_player.id.toText(),
-                  match.white_player.id.toText()
-                );
-
-                if (match.black_player.id.toText() === user.id) {
-                  color = "black";
-                  setBoardOrientation("black");
-
-                  setOpponentUser &&
-                    (await apiGetUser(match.white_player.id.toText()));
-                } else {
-                  setOpponentUser &&
-                    setOpponentUser(
-                      await apiGetUser(match.black_player.id.toText())
-                    );
-                }
-                setCanPlay(true);
-                setChessPosition(match.fen);
-                setMatchId(match.id);
-                resetTimer();
-                startWatchingMatch(match.id, color);
-                clearInterval(interval);
-              }
-            }, 1500);
-          }
-        })
-        .catch((e) => {
-          if (e instanceof ApiError) {
-            setErrorText(e.detail);
-          }
-        });
-    });
-
+  useEffect(() => {
     return () => {
-      loaded = false;
+      actor?.cancel_match_room();
     };
-  }, [caller]);
+  }, []);
+
+  useEffect(() => {
+    setSelfColor(boardOrientation);
+  }, [boardOrientation]);
+
+  useEffect(() => {
+    if (loaded.current) return;
+    if (!identity) return;
+    if (identity.getPrincipal().isAnonymous()) return;
+
+    init(identity.getPrincipal());
+
+    loaded.current = true;
+  }, [identity]);
+
+  // useEffect(() => {
+  //   let loaded = true;
+  //   if (!caller && !user) return;
+
+  //   // setChessPosition(chessGame.fen());
+
+  //   const startWatchingMatch = async (
+  //     x: string,
+  //     orientation: "black" | "white"
+  //   ) => {
+  //     let totalMove = 0;
+  //     while (loaded) {
+  //       let match;
+
+  //       try {
+  //         match = await caller.get_match(x);
+  //       } catch (e) {
+  //         continue;
+  //       }
+
+  //       const moves: any[] = match["moves"];
+
+  //       if (match["winner"] == orientation) {
+  //         setChessPosition(match.fen);
+  //         setMatchStatus("win");
+  //         break;
+  //       } else if (
+  //         match["winner"] == (orientation == "white" ? "black" : "white")
+  //       ) {
+  //         setChessPosition(match.fen);
+  //         setMatchStatus("lose");
+  //         break;
+  //       }
+
+  //       if (moves.length == totalMove) {
+  //         continue;
+  //       }
+
+  //       setChessPosition(match.fen);
+
+  //       totalMove = moves.length;
+
+  //       await new Promise((resolve) => setTimeout(resolve, 1000));
+  //     }
+  //   };
+
+  //   caller.get_caller_match().then(async (matchOpt: any[]) => {
+  //     if (matchOpt.length >= 1) {
+  //       let color: "white" | "black" = "white";
+  //       const match = matchOpt[0];
+  //       console.log(user, match["black_player"]["id"].toText());
+  //       if (match.black_player.id.toText() == user?.id) {
+  //         setBoardOrientation("black");
+  //         color = "black";
+  //       }
+  //       setChessPosition(match.fen);
+  //       setCanPlay(true);
+  //       setMatchId(match.id);
+  //       startWatchingMatch(match.id, color);
+  //       return;
+  //     }
+
+  //     if (identity?.getPrincipal().isAnonymous()) {
+  //       setErrorText("Wallet is not connected properly");
+  //       return;
+  //     }
+
+  //     let matchServer: RoomData | undefined;
+
+  //     try {
+  //       // matchServer = await apiCreateOrJoinRoom();
+
+  //       // caller.
+  //     } catch (e: any) {
+  //       if (e instanceof ApiError) {
+  //         setErrorText(e.detail);
+  //         return;
+  //       }
+  //     }
+
+  //     if (!matchServer) return;
+
+  //     if (matchServer.match_id) {
+  //       const match = await caller.get_match(matchServer.match_id);
+  //       setChessPosition(match.fen);
+
+  //       // console.log(match, match["black_player"]["id"].toText(), user["id"]);
+  //       let color: "white" | "black" = "white";
+
+  //       if (match.black_player.id.toText() == user?.id) {
+  //         setBoardOrientation("black");
+  //         color = "black";
+
+  //         setOpponentUser &&
+  //           setOpponentUser(await apiGetUser(match.white_player.id.toText()));
+  //       } else {
+  //         setOpponentUser &&
+  //           setOpponentUser(await apiGetUser(match.black_player.id.toText()));
+  //       }
+
+  //       setCanPlay(true);
+  //       setMatchId(matchServer.match_id);
+  //       resetTimer();
+  //       startWatchingMatch(matchServer.match_id, color);
+  //     } else {
+  //       const interval = setInterval(async () => {
+  //         let match = await caller?.get_caller_match();
+  //         // console.log(match);
+  //         if (match.length >= 1) {
+  //           match = match[0];
+  //           let color: "white" | "black" = "white";
+
+  //           if (match.black_player.id.toText() === user?.id) {
+  //             color = "black";
+  //             setBoardOrientation("black");
+
+  //             setOpponentUser &&
+  //               (await apiGetUser(match.white_player.id.toText()));
+  //           } else {
+  //             setOpponentUser &&
+  //               setOpponentUser(
+  //                 await apiGetUser(match.black_player.id.toText())
+  //               );
+  //           }
+  //           setCanPlay(true);
+  //           setChessPosition(match.fen);
+  //           setMatchId(match.id);
+  //           resetTimer();
+  //           startWatchingMatch(match.id, color);
+  //           clearInterval(interval);
+  //         }
+  //       }, 1500);
+  //     }
+  //   });
+
+  //   return () => {
+  //     loaded = false;
+  //   };
+  // }, [caller]);
 
   const isMobile = useIsMobile();
 
@@ -247,14 +301,14 @@ const Gameplay = () => {
     piece: string;
   }) => {
     try {
-      await caller.add_match_move(matchId, from_position, to_position, "0");
+      await actor?.make_move(matchId, from_position, to_position, []);
     } catch (e: any) {
       if (
         e
           .toString()
           .includes("Langkah ini seharusnya promosi, tapi tidak diberikan")
       ) {
-        await caller.add_match_move(matchId, from_position, to_position, "q");
+        await actor?.make_move(matchId, from_position, to_position, ["q"]);
       }
     }
   };
@@ -281,7 +335,10 @@ const Gameplay = () => {
             <button
               className="bg-red-500 text-black font-semibold text-xl leading-8 px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
               onClick={() => {
-                apiCancelRoom().then(() => {
+                // apiCancelRoom().then(() => {
+                //   window.location.href = "/";
+                // });
+                actor?.cancel_match_room().then(() => {
                   window.location.href = "/";
                 });
               }}
@@ -443,7 +500,7 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
         <button
           className="text-center block cursor-pointer"
           onClick={() => {
-            actor.resign();
+            // actor?.resign();
           }}
         >
           <div className="p-3.5 rounded-full mb-1 5 mx-auto bg-secondary">
@@ -469,7 +526,7 @@ const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
           <button
             className="mx-auto text-center block cursor-pointer"
             onClick={() => {
-              actor && actor.resign();
+              // actor && actor.resign();
             }}
           >
             <div className="p-4.5 mx-auto rounded-full mb-1 5 bg-secondary">
