@@ -2,7 +2,7 @@ import { Camera, ChevronDown } from "lucide-react";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
-import { apiUpdateUser } from "../helpers/api";
+// import { apiUpdateUser } from "../helpers/api";
 
 const ProfileSettings = () => {
   const user = useContext(UserContext);
@@ -23,11 +23,11 @@ const ProfileSettings = () => {
     e.preventDefault();
 
     if (user?.id) {
-      await apiUpdateUser(user?.id, {
-        first_name: firstName,
-        last_name: lastName,
-        country: country,
-      });
+      // await apiUpdateUser(user?.id, {
+      //   first_name: firstName,
+      //   last_name: lastName,
+      //   country: country,
+      // });
 
       navigate("/profile");
     }

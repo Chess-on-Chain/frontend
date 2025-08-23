@@ -11,7 +11,6 @@ import ProfileSettings from "./pages/ProfileSettings";
 import { BoardProvider } from "./context/BoardContext";
 import ComingSoon from "./pages/ComingSoon";
 import { useContext, useState } from "react";
-import { clearToken } from "./helpers/api";
 import ConnectSuccessContext from "./context/ConnectSuccessContext";
 import { UserProvider } from "./context/UserContext";
 import { MatchProvider } from "./context/MatchContext";
@@ -38,9 +37,9 @@ function Home() {
         idleOptions: {
           disableIdle: true,
         },
-        maxTimeToLive: 7200000000000n,
+        maxTimeToLive: 259200000000000n,
       }}
-      onDisconnect={() => clearToken()}
+      onDisconnect={() => {}}
       onConnectSuccess={() => {
         setIsConnect(true);
       }}

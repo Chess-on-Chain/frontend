@@ -1,51 +1,33 @@
-import { createContext, useEffect, useState } from "react";
-import { apiGetMe, apiLogin, type User } from "../helpers/api";
 import { useAuth, useIsInitializing } from "@nfid/identitykit/react";
+import { createContext, useEffect, useState } from "react";
 import { useCaller } from "../hooks/canister";
-import { sha1 } from "js-sha1";
-import { Buffer } from "buffer";
-export const UserContext = createContext<User | undefined>(undefined);
+import { apiGetUser, type User } from "../helpers/api";
 
-function randomBytes(length: number) {
-  const bytes = new Uint8Array(length);
-  for (let i = 0; i < length; i++) {
-    bytes[i] = Math.floor(Math.random() * 256); // 0 - 255
-  }
-  return bytes;
-}
+export const UserContext = createContext<User | undefined>(undefined);
 
 export function UserProvider({ children }: any) {
   const [user, setUser] = useState<User | undefined>();
-  // const signer = useSigner();
   const auth = useAuth();
   const initializing = useIsInitializing();
   const actor = useCaller();
 
   useEffect(() => {
     if (!initializing && auth.user) {
-      const loginKey = Buffer.from(randomBytes(20));
-      const loginKeyHex = loginKey.toString("hex");
-      const loginKeyHashedHex = sha1(loginKey);
+      let auth_user = auth.user.principal;
 
-      const login = () => {
-        const result = apiGetMe();
-        result.then((user) => {
-          setUser(user as User);
-        });
-        result.catch(() => {
-          actor.login(loginKeyHashedHex).then(async () => {
-            await apiLogin({
-              token: loginKeyHex,
-            });
-
-            login();
-          });
-        });
+      const login = async () => {
+        try {
+          let result = await apiGetUser(auth_user);
+          setUser(result);
+        } catch (e) {
+          await actor?.register();
+          await login();
+        }
       };
 
       login();
     }
-  }, [auth, initializing]);
+  }, [initializing]);
 
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 }

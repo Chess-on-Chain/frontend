@@ -1,16 +1,18 @@
 import { useState, useMemo } from "react";
-import { idlFactory } from "../helpers/idlFactory";
 import { useIdentity } from "@nfid/identitykit/react";
-import { Actor, HttpAgent } from "@dfinity/agent";
+import { HttpAgent } from "@dfinity/agent";
+import { createActor } from "../helpers/canister_factory";
+import type { _SERVICE } from "../helpers/canister_factory/contract.did";
 
 const ICP_API_HOST = import.meta.env.VITE_ICP_API_HOST as string;
 
 export const useCaller = () => {
   const identity = useIdentity();
-  const [actor, setActor] = useState<any>();
+  const [actor, setActor] = useState<_SERVICE>();
 
   useMemo(async () => {
     if (!identity) return;
+    if (identity.getPrincipal().isAnonymous()) return;
 
     const agent = HttpAgent.createSync({
       host: ICP_API_HOST,
@@ -21,9 +23,13 @@ export const useCaller = () => {
       await agent.fetchRootKey();
     }
 
-    const actor = Actor.createActor(idlFactory, {
+    // const actor = Actor.createActor(idlFactory, {
+    //   agent,
+    //   canisterId: import.meta.env.VITE_COC_CANISTER_ID as string,
+    // });
+
+    const actor = createActor(import.meta.env.VITE_COC_CANISTER_ID as string, {
       agent,
-      canisterId: import.meta.env.VITE_COC_CANISTER_ID as string,
     });
 
     setActor(actor);
@@ -33,11 +39,11 @@ export const useCaller = () => {
 };
 
 export const useAnonymousCaller = () => {
-  const actor = Actor.createActor(idlFactory, {
-    agent: new HttpAgent({
-      host: ICP_API_HOST,
-    }),
-    canisterId: import.meta.env.VITE_COC_CANISTER_ID as string,
+  const agent = HttpAgent.createSync({
+    host: ICP_API_HOST,
+  });
+  const actor = createActor(import.meta.env.VITE_COC_CANISTER_ID as string, {
+    agent,
   });
 
   return actor;

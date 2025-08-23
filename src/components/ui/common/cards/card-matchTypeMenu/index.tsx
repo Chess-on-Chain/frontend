@@ -6,8 +6,6 @@ export default function MatchTypeMenu() {
   const [canPlay, setCanPlay] = useState(false);
   const user = useContext(UserContext);
 
-  console.log(user)
-
   useEffect(() => {
     if (user) setCanPlay(true);
   }, [user]);
