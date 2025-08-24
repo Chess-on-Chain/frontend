@@ -1,6 +1,8 @@
 import { HttpAgent } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { createActor } from "./canister_factory";
+import { Buffer } from "buffer";
+import mime from "mime";
 
 // ======================================
 // 🔸 Tipe response
@@ -31,6 +33,7 @@ export interface User {
   last_name: string | undefined;
   country: string | undefined;
   score: number;
+  photo_id: string | undefined;
 }
 
 export interface RoomData {
@@ -82,11 +85,49 @@ let anonymousActor = createActor(
 //   return _me;
 // }
 
+export async function apiGetFile(file_id: string): Promise<string> {
+  const result = await anonymousActor.get_file(file_id);
+  if ("ok" in result) {
+    const file = result.ok;
+
+    let image = "data:";
+    const mimetype = mime.getType(file.filename);
+
+    if (!mimetype) {
+      throw Error;
+    }
+
+    image += mimetype + ";base64,";
+    image += Buffer.from(file.data).toString("base64");
+
+    return image;
+  } else {
+    throw Error;
+  }
+}
+
 export async function apiGetUser(id: Principal): Promise<User> {
   // try {
   let result = await anonymousActor.get_user(id);
   if ("ok" in result) {
+    // console.log(anonymousActor.get_file)
+
+    // try {
+    //   const keren = await anonymousActor.get_file(
+    //     Buffer.from(result.ok.photo[0] as any).toString("hex")
+    //   );
+    //   console.log(keren)
+    // } catch (e) {
+    //   console.error(e);
+    // }
+
     const [first_name, last_name] = result.ok.fullname.split(" ", 2);
+
+    let photo_id: string | undefined;
+
+    if (result.ok.photo[0]) {
+      photo_id = Buffer.from(result.ok.photo[0]).toString("hex");
+    }
 
     const user: User = {
       id: result.ok.id,
@@ -95,6 +136,7 @@ export async function apiGetUser(id: Principal): Promise<User> {
       last_name: last_name ?? "",
       country: result.ok.country[0],
       score: result.ok.score,
+      photo_id,
     };
     return user;
   } else {

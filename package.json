@@ -12,7 +12,7 @@
   "dependencies": {
     "@dfinity/agent": "2.4.1",
     "@dfinity/auth-client": "2.4.1",
-    "@dfinity/candid": "2.4.1",
+    "@dfinity/candid": "^2.4.1",
     "@dfinity/identity": "2.4.1",
     "@dfinity/ledger-icp": "^4.0.0",
     "@dfinity/principal": "2.4.1",
@@ -24,14 +24,18 @@
     "chess.js": "^1.4.0",
     "js-sha1": "^0.7.0",
     "lucide-react": "^0.525.0",
+    "mime": "^4.0.7",
+    "pusher-js": "^8.4.0",
     "react": "^19.1.0",
     "react-chessboard": "^5.2.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.7.0",
-    "tailwindcss": "^4.1.11"
+    "tailwindcss": "^4.1.11",
+    "use-file-picker": "^2.1.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
+    "@junobuild/config": "^2.0.0",
     "@types/axios": "^0.14.4",
     "@types/node": "^24.1.0",
     "@types/react": "^19.1.8",

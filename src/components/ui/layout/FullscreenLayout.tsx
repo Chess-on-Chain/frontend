@@ -2,18 +2,10 @@ import { Home, Timer } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MatchContext } from "../../../context/MatchContext";
-// import { Chess } from "chess.js";
 import { getTimerColorClass, useMatchTimer } from "../../../hooks/timer";
 import { usePawnDawn } from "../../../hooks/pawnDawn";
-
-// interface ColorDawn {
-//   b: number;
-//   k: number;
-//   n: number;
-//   q: number;
-//   p: number;
-//   r: number;
-// }
+import PhotoProfile from "../common/image/PhotoProfile";
+import { UserContext } from "../../../context/UserContext";
 
 const pawnEmoji: any = {
   b: ["♗", "♝"],
@@ -38,6 +30,8 @@ const FullscreenGameLayout = ({ children }: any) => {
   const { timeColor, timeLeft } = useMatchTimer(60);
   const { selfPawnDawn, opponentPawnDawn } = usePawnDawn();
 
+  const user = useContext(UserContext);
+
   return (
     // <div className="w-screen h-screen overflow-hidden flex items-center justify-center text-wite">
     <div className="w-screen h-screen flex flex-col text-white">
@@ -46,7 +40,11 @@ const FullscreenGameLayout = ({ children }: any) => {
           {/* Kiri */}
           <div className="flex items-center justify-end gap-4">
             <div className="flex gap-4">
-              <div className="w-12 h-12 rounded-full bg-linear_gradient" />
+              {/* <div className="w-12 h-12 rounded-full bg-linear_gradient" /> */}
+              <PhotoProfile
+                fileId={user?.photo_id}
+                classSize="w-12 h-12"
+              ></PhotoProfile>
               <div className="max-w-[100px] text-white text-sm leading-tight">
                 <div className="lg:text-xl text-clip line-clamp-1">
                   {self?.username || self?.first_name || "Guest"}
@@ -129,7 +127,11 @@ const FullscreenGameLayout = ({ children }: any) => {
                   {self?.country || "-"} - {self?.score || 0}
                 </div>
               </div>
-              <div className="w-12 h-12 rounded-full bg-linear_gradient" />
+              {/* <div className="w-12 h-12 rounded-full bg-linear_gradient" /> */}
+              <PhotoProfile
+                fileId={opponent?.photo_id}
+                classSize="w-12 h-12"
+              ></PhotoProfile>
             </div>
           </div>
         </div>

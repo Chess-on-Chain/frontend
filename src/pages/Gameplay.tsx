@@ -1,5 +1,4 @@
 import { useContext, useEffect, useRef, useState } from "react";
-// import { Chess } from "chess.js";
 import Board from "../components/ui/common/board/Board";
 import { Flag, Timer } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -14,6 +13,10 @@ import { getTimerColorClass, resetTimer, useMatchTimer } from "../hooks/timer";
 import { usePawnDawn } from "../hooks/pawnDawn";
 import type { Principal } from "@dfinity/principal";
 import type { MatchResultHistory } from "../helpers/canister_factory/contract.did";
+import pusher from "../helpers/pusher";
+import type { Channel } from "pusher-js";
+import * as WebsocketTypes from "./../types/WebsocketTypes";
+import { IDL } from "@dfinity/candid";
 
 interface MoveData {
   from_position: string;
@@ -29,30 +32,16 @@ interface LayoutProps {
 const Gameplay = () => {
   const { setSelfColor } = useContext(MatchContext);
 
-  const [
-    chessPosition,
-    setChessPosition,
-    boardOrientation,
-    setBoardOrientation,
-  ] = useContext(BoardContext);
-
-  // const previousChessPosition = useRef<string | undefined>(undefined);
-
-  // useEffect(() => {
-  //   if (
-  //     chessPosition != previousChessPosition.current &&
-  //     previousChessPosition.current
-  //   ) {
-  //     new Audio("/audio/move.mp3").play().catch(() => {});
-  //   }
-
-  //   previousChessPosition.current = chessPosition;
-  // }, [chessPosition]);
+  const [, setChessPosition, boardOrientation, setBoardOrientation] =
+    useContext(BoardContext);
 
   const [matchId, setMatchId] = useState<bigint>(0n);
   const [canPlay, setCanPlay] = useState(false);
   const [errorText, setErrorText] = useState<string | undefined>();
   const loaded = useRef(false);
+  const boardOrientationRef = useRef(boardOrientation);
+
+  const channelWebsocket = useRef<Channel | null>(null);
 
   const [matchStatus, setMatchStatus] = useState("ongoing");
 
@@ -63,18 +52,22 @@ const Gameplay = () => {
   const identity = useIdentity();
 
   const init = async (caller: Principal) => {
+    listenWebsocket(caller);
+
     const match = await actor?.get_active_match(caller);
     if (match) {
       if ("ok" in match) {
-        await on_match_exists(caller, match.ok);
+        await onMatchExists(caller, match.ok);
+        return;
+      } else if ("err" in match && match.err == "waiting for opponent") {
         return;
       }
     }
 
-    await on_create_match(caller);
+    await onCreateMatch(caller);
   };
 
-  const on_create_match = async (caller: Principal) => {
+  const onCreateMatch = async (caller: Principal) => {
     const result = await actor?.make_match(true);
 
     if (result && "ok" in result) {
@@ -83,8 +76,7 @@ const Gameplay = () => {
 
         setMatchId(match.id);
         let opponent_principal = match.white_player;
-
-        if (match.white_player == caller) {
+        if (match.white_player.toText() == caller.toText()) {
           setBoardOrientation("white");
           opponent_principal = match.black_player;
         } else {
@@ -97,9 +89,6 @@ const Gameplay = () => {
         setCanPlay(true);
         return;
       }
-      // if ('text' in result.ok) {
-
-      // };
     }
 
     if (result && "err" in result) {
@@ -107,7 +96,7 @@ const Gameplay = () => {
     }
   };
 
-  const on_match_exists = async (
+  const onMatchExists = async (
     caller: Principal,
     match: MatchResultHistory
   ) => {
@@ -115,7 +104,7 @@ const Gameplay = () => {
 
     let opponent_principal = match.white_player;
 
-    if (match.white_player == caller) {
+    if (match.white_player.toText() == caller.toText()) {
       setBoardOrientation("white");
       opponent_principal = match.black_player;
     } else {
@@ -133,11 +122,13 @@ const Gameplay = () => {
   useEffect(() => {
     return () => {
       actor?.cancel_match_room();
+      channelWebsocket.current?.unsubscribe();
     };
   }, []);
 
   useEffect(() => {
     setSelfColor(boardOrientation);
+    boardOrientationRef.current = boardOrientation;
   }, [boardOrientation]);
 
   useEffect(() => {
@@ -150,145 +141,80 @@ const Gameplay = () => {
     loaded.current = true;
   }, [identity]);
 
-  // useEffect(() => {
-  //   let loaded = true;
-  //   if (!caller && !user) return;
+  const listenWebsocket = (principal: Principal) => {
+    console.log("WEBSOCKET LISTENING");
+    const channel = pusher.subscribe(principal.toString());
+    channelWebsocket.current = channel;
 
-  //   // setChessPosition(chessGame.fen());
+    channel.bind("match_created", async (data: any) => {
+      const body = new Uint8Array(Object.values(data));
+      const candid = WebsocketTypes.MatchCreatedCandid;
 
-  //   const startWatchingMatch = async (
-  //     x: string,
-  //     orientation: "black" | "white"
-  //   ) => {
-  //     let totalMove = 0;
-  //     while (loaded) {
-  //       let match;
+      const value = IDL.decode([candid], body);
+      const match: WebsocketTypes.MatchCreated = value[0] as any;
+      await onMatchCreated(principal, match);
+    });
 
-  //       try {
-  //         match = await caller.get_match(x);
-  //       } catch (e) {
-  //         continue;
-  //       }
+    channel.bind("move_created", async (data: any) => {
+      const body = new Uint8Array(Object.values(data));
+      const candid = WebsocketTypes.MoveCreatedCandid;
 
-  //       const moves: any[] = match["moves"];
+      const value = IDL.decode([candid], body);
+      const move: WebsocketTypes.MoveCreated = value[0] as any;
+      await onMoveCreated(move);
+    });
 
-  //       if (match["winner"] == orientation) {
-  //         setChessPosition(match.fen);
-  //         setMatchStatus("win");
-  //         break;
-  //       } else if (
-  //         match["winner"] == (orientation == "white" ? "black" : "white")
-  //       ) {
-  //         setChessPosition(match.fen);
-  //         setMatchStatus("lose");
-  //         break;
-  //       }
+    channel.bind("match_finished", async (data: any) => {
+      const body = new Uint8Array(Object.values(data));
+      const candid = WebsocketTypes.MatchFinishedCandid;
 
-  //       if (moves.length == totalMove) {
-  //         continue;
-  //       }
+      const value = IDL.decode([candid], body);
+      const match: WebsocketTypes.MatchFinished = value[0] as any;
+      await onMatchFinished(match);
+    });
+  };
 
-  //       setChessPosition(match.fen);
+  const onMatchFinished = async (match: WebsocketTypes.MatchFinished) => {
+    switch (match.winner) {
+      case boardOrientationRef.current:
+        setMatchStatus("win");
+        break;
+      case "draw":
+        setMatchStatus("draw");
+        break;
+      default:
+        setMatchStatus("lose");
+    }
+  };
 
-  //       totalMove = moves.length;
+  const onMatchCreated = async (
+    caller: Principal,
+    match: WebsocketTypes.MatchCreated
+  ) => {
+    setMatchId(match.match_id);
 
-  //       await new Promise((resolve) => setTimeout(resolve, 1000));
-  //     }
-  //   };
+    const myOrientation: "black" | "white" =
+      match.white_player.toText() == caller.toText() ? "white" : "black";
 
-  //   caller.get_caller_match().then(async (matchOpt: any[]) => {
-  //     if (matchOpt.length >= 1) {
-  //       let color: "white" | "black" = "white";
-  //       const match = matchOpt[0];
-  //       console.log(user, match["black_player"]["id"].toText());
-  //       if (match.black_player.id.toText() == user?.id) {
-  //         setBoardOrientation("black");
-  //         color = "black";
-  //       }
-  //       setChessPosition(match.fen);
-  //       setCanPlay(true);
-  //       setMatchId(match.id);
-  //       startWatchingMatch(match.id, color);
-  //       return;
-  //     }
+    let opponentPrincipal: Principal = match.white_player;
+    if (myOrientation == "white") {
+      opponentPrincipal = match.black_player;
+    }
 
-  //     if (identity?.getPrincipal().isAnonymous()) {
-  //       setErrorText("Wallet is not connected properly");
-  //       return;
-  //     }
+    const opponentUser = await apiGetUser(opponentPrincipal);
 
-  //     let matchServer: RoomData | undefined;
+    setOpponentUser(opponentUser);
+    setBoardOrientation(myOrientation);
+    setChessPosition(match.fen);
+    setCanPlay(true);
+    resetTimer();
+  };
 
-  //     try {
-  //       // matchServer = await apiCreateOrJoinRoom();
-
-  //       // caller.
-  //     } catch (e: any) {
-  //       if (e instanceof ApiError) {
-  //         setErrorText(e.detail);
-  //         return;
-  //       }
-  //     }
-
-  //     if (!matchServer) return;
-
-  //     if (matchServer.match_id) {
-  //       const match = await caller.get_match(matchServer.match_id);
-  //       setChessPosition(match.fen);
-
-  //       // console.log(match, match["black_player"]["id"].toText(), user["id"]);
-  //       let color: "white" | "black" = "white";
-
-  //       if (match.black_player.id.toText() == user?.id) {
-  //         setBoardOrientation("black");
-  //         color = "black";
-
-  //         setOpponentUser &&
-  //           setOpponentUser(await apiGetUser(match.white_player.id.toText()));
-  //       } else {
-  //         setOpponentUser &&
-  //           setOpponentUser(await apiGetUser(match.black_player.id.toText()));
-  //       }
-
-  //       setCanPlay(true);
-  //       setMatchId(matchServer.match_id);
-  //       resetTimer();
-  //       startWatchingMatch(matchServer.match_id, color);
-  //     } else {
-  //       const interval = setInterval(async () => {
-  //         let match = await caller?.get_caller_match();
-  //         // console.log(match);
-  //         if (match.length >= 1) {
-  //           match = match[0];
-  //           let color: "white" | "black" = "white";
-
-  //           if (match.black_player.id.toText() === user?.id) {
-  //             color = "black";
-  //             setBoardOrientation("black");
-
-  //             setOpponentUser &&
-  //               (await apiGetUser(match.white_player.id.toText()));
-  //           } else {
-  //             setOpponentUser &&
-  //               setOpponentUser(
-  //                 await apiGetUser(match.black_player.id.toText())
-  //               );
-  //           }
-  //           setCanPlay(true);
-  //           setChessPosition(match.fen);
-  //           setMatchId(match.id);
-  //           resetTimer();
-  //           startWatchingMatch(match.id, color);
-  //           clearInterval(interval);
-  //         }
-  //       }, 1500);
-  //     }
-  //   });
-
-  //   return () => {
-  //     loaded = false;
-  //   };
-  // }, [caller]);
+  const onMoveCreated = async (move: WebsocketTypes.MoveCreated) => {
+    setChessPosition(move.fen);
+    new Audio("/audio/move.mp3").play().catch(() => {});
+    resetTimer();
+  };
 
   const isMobile = useIsMobile();
 
@@ -353,6 +279,21 @@ const Gameplay = () => {
           <div className="w-full space-y-8">
             <p className="text-center text-white font-medium text-3xl sm:text-5xl leading-20 sm:leading-24 bg-linear-to-l from-white/0 from-20% via-[#fdda13bb] via-50% to-white/0 to-80%">
               Victory
+            </p>
+            <button
+              onClick={() => (window.location.href = "/")}
+              className="bg-secondary text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
+            >
+              Back
+            </button>
+          </div>
+        </div>
+      )}
+      {matchStatus == "draw" && (
+        <div className="fixed h-screen w-full top-0 right-0 bg-black/70 z-50 flex items-center">
+          <div className="w-full space-y-8">
+            <p className="text-center text-white font-medium text-3xl sm:text-5xl leading-20 sm:leading-24 bg-linear-to-l from-white/0 from-20% via-[#fdda13bb] via-50% to-white/0 to-80%">
+              Draw
             </p>
             <button
               onClick={() => (window.location.href = "/")}
@@ -500,7 +441,7 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
         <button
           className="text-center block cursor-pointer"
           onClick={() => {
-            // actor?.resign();
+            actor?.resign();
           }}
         >
           <div className="p-3.5 rounded-full mb-1 5 mx-auto bg-secondary">
@@ -526,7 +467,7 @@ const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
           <button
             className="mx-auto text-center block cursor-pointer"
             onClick={() => {
-              // actor && actor.resign();
+              actor && actor.resign();
             }}
           >
             <div className="p-4.5 mx-auto rounded-full mb-1 5 bg-secondary">

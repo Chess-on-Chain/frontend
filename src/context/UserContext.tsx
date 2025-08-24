@@ -1,5 +1,5 @@
 import { useAuth, useIsInitializing } from "@nfid/identitykit/react";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useRef, useState } from "react";
 import { useCaller } from "../hooks/canister";
 import { apiGetUser, type User } from "../helpers/api";
 
@@ -10,11 +10,12 @@ export function UserProvider({ children }: any) {
   const auth = useAuth();
   const initializing = useIsInitializing();
   const actor = useCaller();
+  const loaded = useRef(false);
 
   useEffect(() => {
+    if (loaded.current) return;
     if (!initializing && auth.user) {
       let auth_user = auth.user.principal;
-
       const login = async () => {
         try {
           let result = await apiGetUser(auth_user);
@@ -23,11 +24,12 @@ export function UserProvider({ children }: any) {
           await actor?.register();
           await login();
         }
+        loaded.current = true;
       };
 
       login();
     }
-  }, [initializing]);
+  }, [initializing, auth.user]);
 
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 }

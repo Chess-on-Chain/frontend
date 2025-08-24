@@ -2,6 +2,14 @@ import { Camera, ChevronDown } from "lucide-react";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
+import { useCaller } from "../hooks/canister";
+import { useFilePicker } from "use-file-picker";
+import {
+  FileAmountLimitValidator,
+  FileSizeValidator,
+  FileTypeValidator,
+} from "use-file-picker/validators";
+import { dataURLToUint8Array, getCacheFile } from "../helpers/utils";
 // import { apiUpdateUser } from "../helpers/api";
 
 const ProfileSettings = () => {
@@ -9,27 +17,102 @@ const ProfileSettings = () => {
   const navigate = useNavigate();
 
   // const [firstName, setFirstName] = useState<string | undefined>();
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [country, setCountry] = useState<string>("");
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
+  const [country, setCountry] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+  const [bgImage, setBgImage] = useState<string | null>(null);
+
+  const actor = useCaller();
+  const { openFilePicker, filesContent } = useFilePicker({
+    accept: "image/*",
+    readAs: "DataURL",
+    validators: [
+      new FileAmountLimitValidator({ max: 1 }),
+      new FileTypeValidator(["jpg", "png", "jpeg"]),
+      new FileSizeValidator({ maxFileSize: 500 * 1024 /* 500 KB */ }),
+    ],
+  });
+
+  useEffect(() => {
+    if (filesContent.length == 0) return;
+    // console.log(filesContent);
+    // filesContent[0].content.then((buf) => {
+    //   const blob = new Blob([buf], { type: "image/jpeg" });
+    //   const url = URL.createObjectURL(blob);
+    //   setBgImage(url);
+    // });
+    // console.log(filesContent[0])
+    // const url = URL.createObjectURL(filesContent[0]);
+    // setBgImage(url);
+    setBgImage(filesContent[0].content);
+  }, [filesContent]);
 
   useEffect(() => {
     setFirstName(user?.first_name ?? "");
     setLastName(user?.last_name ?? "");
-    setCountry(user?.country ?? "INDONESIA");
+    setCountry(user?.country ?? "");
+    setUsername(user?.username ?? "");
+    user?.photo_id &&
+      getCacheFile(user?.photo_id).then((photo) => {
+        setBgImage(photo);
+      });
   }, [user]);
 
   const handleSaveAll = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (user?.id) {
-      // await apiUpdateUser(user?.id, {
-      //   first_name: firstName,
-      //   last_name: lastName,
-      //   country: country,
-      // });
+      const newCountry: [] | [string] = country ? [country] : [];
+      let _newFullname: string[] = [];
 
-      navigate("/profile");
+      if (firstName) {
+        _newFullname.push(firstName);
+      }
+
+      if (lastName) {
+        _newFullname.push(lastName);
+      }
+
+      const newFullname: [] | [string] = [_newFullname.join(" ")];
+      const newUsername: [] | [string] = username ? [username] : [];
+      let newPhoto:
+        | []
+        | [
+            {
+              data: Uint8Array | number[];
+              extension: string;
+            }
+          ] = [];
+
+      if (filesContent.length == 1) {
+        const extension = filesContent[0].name.split(".").reverse()[0];
+        newPhoto = [
+          {
+            extension,
+            data: dataURLToUint8Array(filesContent[0].content),
+          },
+        ];
+      }
+
+      // TODO: tambahin logic loading disini
+
+      const result = await actor?.edit_user({
+        country: newCountry,
+        fullname: newFullname,
+        username: newUsername,
+        photo: newPhoto,
+      });
+
+      // console.log(newPhoto[0]?.extension)
+
+      if (result && "ok" in result) {
+        // navigate("/profile");
+        window.location.reload();
+      } else if (result && "err" in result) {
+        alert(result.err);
+        // TODO: perbagus error
+      }
     }
   };
 
@@ -39,10 +122,19 @@ const ProfileSettings = () => {
 
       {/* TOP Section */}
       <div className="flex items-center gap-6 mb-10">
-        <div className="relative w-24 h-24 rounded-full bg-linear-to-b from-secondary to-[#4F3B2B]">
-          <div className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-accent flex items-center justify-center shadow-md">
+        <div
+          style={{
+            background: bgImage ? `url('${bgImage}')` : undefined,
+            backgroundSize: "cover",
+          }}
+          className="relative w-24 h-24 rounded-full bg-linear-to-b from-secondary to-[#4F3B2B]"
+        >
+          <button
+            onClick={openFilePicker}
+            className="cursor-pointer absolute bottom-0 right-0 w-7 h-7 rounded-full bg-accent flex items-center justify-center shadow-md"
+          >
             <Camera size={16} className="text-black" />
-          </div>
+          </button>
         </div>
 
         <div>
@@ -82,18 +174,23 @@ const ProfileSettings = () => {
             <div className="flex-1 flex items-center space-x-4">
               <input
                 type="text"
-                name="usrname"
+                name="username"
                 id="username"
-                className="w-full px-3 py-2 text-lg tracking-wide border border-white/20 text-white bg-black rounded disabled:bg-primary disabled:border-white/5"
-                defaultValue="Anonymous"
-                disabled
+                className="w-full px-3 py-2 text-lg tracking-wide border border-white/20 text-white bg-black rounded "
+                value={username ?? ""}
+                onChange={(e) => {
+                  let cleanedUsername = e.target.value
+                    .replace(" ", "")
+                    .toLowerCase();
+                  setUsername(cleanedUsername);
+                }}
               />
-              <button
+              {/* <button
                 type="button"
                 className="px-4 py-2 rounded-sm bg-secondary text-black font-semibold hover:bg-secondary cursor-not-allowed"
               >
                 Change
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -109,7 +206,7 @@ const ProfileSettings = () => {
               <input
                 type="text"
                 name="firstName"
-                value={firstName}
+                value={firstName ?? ""}
                 onChange={(e) => setFirstName(e.target.value)}
                 id="firstName"
                 className="w-full px-3 py-2 text-lg tracking-wide text-white bg-black border border-white/20 rounded"
@@ -128,7 +225,7 @@ const ProfileSettings = () => {
               <input
                 type="text"
                 name="lastName"
-                value={lastName}
+                value={lastName ?? ""}
                 onChange={(e) => setLastName(e.target.value)}
                 id="lastName"
                 className="w-full px-3 py-2 text-lg tracking-wide text-white bg-black border border-white/20 rounded"
@@ -148,9 +245,10 @@ const ProfileSettings = () => {
                 name="country"
                 id="country"
                 className="w-full px-3 py-2 text-lg tracking-wide border border-white/20 bg-black text-white appearance-none"
-                value={country}
+                value={country ?? ""}
                 onChange={(e) => setCountry(e.target.value)}
               >
+                <option value="">---</option>
                 <option value="ID">INDONESIA</option>
                 <option value="CH">CHINA</option>
                 <option value="RU">RUSIA</option>
@@ -174,7 +272,7 @@ const ProfileSettings = () => {
             </button>
             <button
               onClick={handleSaveAll}
-              // type="submit"
+              type="submit"
               className="px-6 py-2 text-base lg:text-xl font-semibold text-black bg-secondary hover:bg-secondary rounded cursor-pointer"
             >
               Save All
