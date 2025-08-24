@@ -88,7 +88,19 @@ export default function Friends() {
             <BtnToProfile />
           </div>
           {/* Section - Share Type Menu */}
-          <CardShare />
+          <div className="flex flex-col gap-4 w-full md:max-w-xs lg:gap-6">
+            <CardShare
+              type="link"
+              title="Friend Link"
+              icon="/Friend-Link.png"
+              link="https://link.chessonchain.com/friend/90yoyoy" 
+            />
+            <CardShare
+              type="email"
+              title="Send Email Invite"
+              icon="/Email-Link.png"
+            />
+          </div>
           {/* <div className="flex flex-col gap-4 lg:gap-6 w-full md:max-w-xs">
             <CardShare text="Friend Link"/>
             <CardShare text="Send Email Invite"/>
@@ -98,12 +110,12 @@ export default function Friends() {
         <div className="flex gap-4 w-full">
           <div className="bg-primary text-white p-4 rounded-lg w-full border-2 border-[#1E1E1E]">
             {/* Search */}
-            <div className="relative flex items-center mb-4 z-50">
+            <div className="relative flex items-center mb-4">
               <Search className="absolute top-[20%] left-2 w-5 h-5 text-gray-300" />
               <input
                 type="text"
                 placeholder="Search by name or username"
-                className="w-full rounded-md bg-[#1E1E1E] px-8 py-2 text-sm outline-none"
+                className="w-full rounded-md bg-[#1E1E1E] px-9 py-2 text-sm outline-none"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
