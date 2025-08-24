@@ -44,7 +44,7 @@ const Profile = () => {
 
       if ("ok" in response) {
         const histories = response.ok;
-        const result: GameHistory[] = [];
+
         for (const history of histories.reverse()) {
           const date = new Date(Number(history.time / BigInt(10 ** 6)));
 
@@ -81,6 +81,7 @@ const Profile = () => {
             history.white_player.toText() == auth.user?.principal.toText()
               ? "white"
               : "black";
+
           let status = "Draw";
 
           if (history.winner == "ongoing") return;
@@ -107,7 +108,7 @@ const Profile = () => {
     return () => {
       console.log("clean up");
     };
-  }, [user]);
+  }, [auth.user, user]);
 
   return (
     <div className="profile-content">

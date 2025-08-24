@@ -2,18 +2,8 @@ import { Home, Timer } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MatchContext } from "../../../context/MatchContext";
-// import { Chess } from "chess.js";
 import { getTimerColorClass, useMatchTimer } from "../../../hooks/timer";
 import { usePawnDawn } from "../../../hooks/pawnDawn";
-
-// interface ColorDawn {
-//   b: number;
-//   k: number;
-//   n: number;
-//   q: number;
-//   p: number;
-//   r: number;
-// }
 
 const pawnEmoji: any = {
   b: ["♗", "♝"],
