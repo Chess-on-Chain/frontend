@@ -16,7 +16,6 @@ export function UserProvider({ children }: any) {
     if (loaded.current) return;
     if (!initializing && auth.user) {
       let auth_user = auth.user.principal;
-
       const login = async () => {
         try {
           let result = await apiGetUser(auth_user);

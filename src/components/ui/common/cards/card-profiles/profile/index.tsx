@@ -1,13 +1,19 @@
+import { useContext } from "react";
 import type { Player } from "../../../../../../utils/types";
+import PhotoProfile from "../../../image/PhotoProfile";
+import { UserContext } from "../../../../../../context/UserContext";
 
 type ProfileProps = {
-    data: Player;
+  data: Player;
 };
 
 export default function CardProfile({ data }: ProfileProps) {
+  const user = useContext(UserContext);
+
   return (
     <div className="flex items-center gap-6">
-      <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-gradient-to-t from-[#614126] to-[#a47f55]" />
+      {/* <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-gradient-to-t from-[#614126] to-[#a47f55]" /> */}
+      <PhotoProfile fileId={user?.photo_id}></PhotoProfile>
       <div>
         <div className="flex items-center gap-2 text-lg sm:text-xl lg:text-3xl font-semibold">
           {data.username}{" "}
