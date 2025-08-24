@@ -14,6 +14,10 @@ import { getTimerColorClass, resetTimer, useMatchTimer } from "../hooks/timer";
 import { usePawnDawn } from "../hooks/pawnDawn";
 import type { Principal } from "@dfinity/principal";
 import type { MatchResultHistory } from "../helpers/canister_factory/contract.did";
+import pusher from "../helpers/pusher";
+import type { Channel } from "pusher-js";
+import * as WebsocketTypes from "./../types/WebsocketTypes";
+import { IDL } from "@dfinity/candid";
 
 interface MoveData {
   from_position: string;
@@ -29,12 +33,8 @@ interface LayoutProps {
 const Gameplay = () => {
   const { setSelfColor } = useContext(MatchContext);
 
-  const [
-    chessPosition,
-    setChessPosition,
-    boardOrientation,
-    setBoardOrientation,
-  ] = useContext(BoardContext);
+  const [, setChessPosition, boardOrientation, setBoardOrientation] =
+    useContext(BoardContext);
 
   // const previousChessPosition = useRef<string | undefined>(undefined);
 
@@ -53,6 +53,7 @@ const Gameplay = () => {
   const [canPlay, setCanPlay] = useState(false);
   const [errorText, setErrorText] = useState<string | undefined>();
   const loaded = useRef(false);
+  const channelWebsocket = useRef<Channel | null>(null);
 
   const [matchStatus, setMatchStatus] = useState("ongoing");
 
@@ -63,18 +64,22 @@ const Gameplay = () => {
   const identity = useIdentity();
 
   const init = async (caller: Principal) => {
+    listenWebsocket(caller);
+
     const match = await actor?.get_active_match(caller);
     if (match) {
       if ("ok" in match) {
-        await on_match_exists(caller, match.ok);
+        await onMatchExists(caller, match.ok);
+        return;
+      } else if ("err" in match && match.err == "waiting for opponent") {
         return;
       }
     }
 
-    await on_create_match(caller);
+    await onCreateMatch(caller);
   };
 
-  const on_create_match = async (caller: Principal) => {
+  const onCreateMatch = async (caller: Principal) => {
     const result = await actor?.make_match(true);
 
     if (result && "ok" in result) {
@@ -83,7 +88,7 @@ const Gameplay = () => {
 
         setMatchId(match.id);
         let opponent_principal = match.white_player;
-
+        console.log(caller.toText(), match.white_player.toText());
         if (match.white_player == caller) {
           setBoardOrientation("white");
           opponent_principal = match.black_player;
@@ -97,9 +102,6 @@ const Gameplay = () => {
         setCanPlay(true);
         return;
       }
-      // if ('text' in result.ok) {
-
-      // };
     }
 
     if (result && "err" in result) {
@@ -107,7 +109,7 @@ const Gameplay = () => {
     }
   };
 
-  const on_match_exists = async (
+  const onMatchExists = async (
     caller: Principal,
     match: MatchResultHistory
   ) => {
@@ -115,7 +117,7 @@ const Gameplay = () => {
 
     let opponent_principal = match.white_player;
 
-    if (match.white_player == caller) {
+    if (match.white_player.toText() == caller.toText()) {
       setBoardOrientation("white");
       opponent_principal = match.black_player;
     } else {
@@ -133,6 +135,7 @@ const Gameplay = () => {
   useEffect(() => {
     return () => {
       actor?.cancel_match_room();
+      channelWebsocket.current?.unsubscribe();
     };
   }, []);
 
@@ -149,6 +152,58 @@ const Gameplay = () => {
 
     loaded.current = true;
   }, [identity]);
+
+  const listenWebsocket = (principal: Principal) => {
+    console.log("WEBSOCKET LISTENING");
+    const channel = pusher.subscribe(principal.toString());
+    channelWebsocket.current = channel;
+
+    channel.bind("match_created", async (data: any) => {
+      const body = new Uint8Array(Object.values(data));
+      const candid = WebsocketTypes.MatchCreatedCandid;
+
+      const value = IDL.decode([candid], body);
+      const match: WebsocketTypes.MatchCreated = value[0] as any;
+      await onMatchCreated(principal, match);
+    });
+
+    channel.bind("move_created", async (data: any) => {
+      const body = new Uint8Array(Object.values(data));
+      const candid = WebsocketTypes.MoveCreatedCandid;
+
+      const value = IDL.decode([candid], body);
+      const move: WebsocketTypes.MoveCreated = value[0] as any;
+      await onMoveCreated(move);
+    });
+  };
+
+  const onMatchCreated = async (
+    caller: Principal,
+    match: WebsocketTypes.MatchCreated
+  ) => {
+    setMatchId(match.match_id);
+
+    const myOrientation: "black" | "white" =
+      match.white_player.toText() == caller.toText() ? "white" : "black";
+
+    let opponentPrincipal: Principal = match.white_player;
+    if (myOrientation == "white") {
+      opponentPrincipal = match.black_player;
+    }
+
+    const opponentUser = await apiGetUser(opponentPrincipal);
+
+    setOpponentUser(opponentUser);
+    setBoardOrientation(myOrientation);
+    setChessPosition(match.fen);
+    setCanPlay(true);
+    resetTimer();
+  };
+
+  const onMoveCreated = async (move: WebsocketTypes.MoveCreated) => {
+    setChessPosition(move.fen);
+    resetTimer();
+  };
 
   // useEffect(() => {
   //   let loaded = true;
