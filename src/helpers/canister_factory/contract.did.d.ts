@@ -54,15 +54,17 @@ export type Result_2 = { 'ok' : MatchCreated } |
   { 'err' : string };
 export type Result_3 = { 'ok' : User } |
   { 'err' : string };
-export type Result_4 = { 'ok' : MatchResult } |
+export type Result_4 = { 'ok' : Principal } |
   { 'err' : string };
-export type Result_5 = { 'ok' : Array<MatchResultHistory> } |
+export type Result_5 = { 'ok' : MatchResult } |
   { 'err' : string };
-export type Result_6 = { 'ok' : Array<User> } |
+export type Result_6 = { 'ok' : Array<MatchResultHistory> } |
   { 'err' : string };
-export type Result_7 = { 'ok' : File } |
+export type Result_7 = { 'ok' : Array<User> } |
   { 'err' : string };
-export type Result_8 = { 'ok' : MatchResultHistory } |
+export type Result_8 = { 'ok' : File } |
+  { 'err' : string };
+export type Result_9 = { 'ok' : MatchResultHistory } |
   { 'err' : string };
 export interface User {
   'id' : string,
@@ -87,11 +89,12 @@ export interface _SERVICE {
   'cancel_match_room' : ActorMethod<[], undefined>,
   'change_initial_fen' : ActorMethod<[string], undefined>,
   'edit_user' : ActorMethod<[EditUser], Result>,
-  'get_active_match' : ActorMethod<[Principal], Result_8>,
-  'get_file' : ActorMethod<[string], Result_7>,
-  'get_friends' : ActorMethod<[Principal, boolean], Result_6>,
-  'get_histories' : ActorMethod<[Principal, bigint, bigint], Result_5>,
-  'get_match' : ActorMethod<[bigint], Result_4>,
+  'get_active_match' : ActorMethod<[Principal], Result_9>,
+  'get_file' : ActorMethod<[string], Result_8>,
+  'get_friends' : ActorMethod<[Principal, boolean], Result_7>,
+  'get_histories' : ActorMethod<[Principal, bigint, bigint], Result_6>,
+  'get_match' : ActorMethod<[bigint], Result_5>,
+  'get_principal_from_username' : ActorMethod<[string], Result_4>,
   'get_user' : ActorMethod<[Principal], Result_3>,
   'initialize' : ActorMethod<[Principal, Principal], undefined>,
   'invite_match' : ActorMethod<[Principal], Result>,

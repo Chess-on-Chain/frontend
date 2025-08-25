@@ -1,4 +1,11 @@
 import { defineConfig } from "@junobuild/config";
+import { loadEnvFile } from "process";
+
+loadEnvFile(".env.local");
+
+try {
+  loadEnvFile(".env");
+} catch {}
 
 export default defineConfig({
   satellite: {

@@ -31,13 +31,13 @@ export const idlFactory = ({ IDL }) => {
     'black_player' : IDL.Principal,
     'white_player' : IDL.Principal,
   });
-  const Result_8 = IDL.Variant({ 'ok' : MatchResultHistory, 'err' : IDL.Text });
+  const Result_9 = IDL.Variant({ 'ok' : MatchResultHistory, 'err' : IDL.Text });
   const File = IDL.Record({
     'data' : IDL.Vec(IDL.Nat8),
     'hash' : IDL.Vec(IDL.Nat8),
     'filename' : IDL.Text,
   });
-  const Result_7 = IDL.Variant({ 'ok' : File, 'err' : IDL.Text });
+  const Result_8 = IDL.Variant({ 'ok' : File, 'err' : IDL.Text });
   const User = IDL.Record({
     'id' : IDL.Text,
     'win' : IDL.Nat16,
@@ -50,8 +50,8 @@ export const idlFactory = ({ IDL }) => {
     'photo' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'is_banned' : IDL.Bool,
   });
-  const Result_6 = IDL.Variant({ 'ok' : IDL.Vec(User), 'err' : IDL.Text });
-  const Result_5 = IDL.Variant({
+  const Result_7 = IDL.Variant({ 'ok' : IDL.Vec(User), 'err' : IDL.Text });
+  const Result_6 = IDL.Variant({
     'ok' : IDL.Vec(MatchResultHistory),
     'err' : IDL.Text,
   });
@@ -64,7 +64,8 @@ export const idlFactory = ({ IDL }) => {
     'black_player' : User,
     'white_player' : User,
   });
-  const Result_4 = IDL.Variant({ 'ok' : MatchResult, 'err' : IDL.Text });
+  const Result_5 = IDL.Variant({ 'ok' : MatchResult, 'err' : IDL.Text });
+  const Result_4 = IDL.Variant({ 'ok' : IDL.Principal, 'err' : IDL.Text });
   const Result_3 = IDL.Variant({ 'ok' : User, 'err' : IDL.Text });
   const MatchCreated = IDL.Variant({ 'match' : Match, 'text' : IDL.Text });
   const Result_2 = IDL.Variant({ 'ok' : MatchCreated, 'err' : IDL.Text });
@@ -79,15 +80,16 @@ export const idlFactory = ({ IDL }) => {
     'cancel_match_room' : IDL.Func([], [], []),
     'change_initial_fen' : IDL.Func([IDL.Text], [], ['oneway']),
     'edit_user' : IDL.Func([EditUser], [Result], []),
-    'get_active_match' : IDL.Func([IDL.Principal], [Result_8], ['query']),
-    'get_file' : IDL.Func([IDL.Text], [Result_7], ['query']),
-    'get_friends' : IDL.Func([IDL.Principal, IDL.Bool], [Result_6], ['query']),
+    'get_active_match' : IDL.Func([IDL.Principal], [Result_9], ['query']),
+    'get_file' : IDL.Func([IDL.Text], [Result_8], ['query']),
+    'get_friends' : IDL.Func([IDL.Principal, IDL.Bool], [Result_7], ['query']),
     'get_histories' : IDL.Func(
         [IDL.Principal, IDL.Nat, IDL.Nat],
-        [Result_5],
+        [Result_6],
         ['query'],
       ),
-    'get_match' : IDL.Func([IDL.Nat64], [Result_4], ['query']),
+    'get_match' : IDL.Func([IDL.Nat64], [Result_5], ['query']),
+    'get_principal_from_username' : IDL.Func([IDL.Text], [Result_4], ['query']),
     'get_user' : IDL.Func([IDL.Principal], [Result_3], ['query']),
     'initialize' : IDL.Func([IDL.Principal, IDL.Principal], [], ['oneway']),
     'invite_match' : IDL.Func([IDL.Principal], [Result], []),
