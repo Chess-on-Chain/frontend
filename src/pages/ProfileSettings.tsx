@@ -10,6 +10,7 @@ import {
   FileTypeValidator,
 } from "use-file-picker/validators";
 import { dataURLToUint8Array, getCacheFile } from "../helpers/utils";
+import toast, { Toaster } from "react-hot-toast";
 // import { apiUpdateUser } from "../helpers/api";
 
 const ProfileSettings = () => {
@@ -22,6 +23,7 @@ const ProfileSettings = () => {
   const [country, setCountry] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [bgImage, setBgImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const actor = useCaller();
   const { openFilePicker, filesContent } = useFilePicker({
@@ -59,43 +61,56 @@ const ProfileSettings = () => {
       });
   }, [user]);
 
-  const handleSaveAll = async (e: React.FormEvent) => {
+  const handleSaveAll = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (user?.id) {
-      const newCountry: [] | [string] = country ? [country] : [];
-      let _newFullname: string[] = [];
+    if (!user?.id) {
+      toast.error("User not found");
+      return;
+    }
+    if (!actor) {
+      toast.error("Service not ready. Please try again.");
+      return;
+    }
 
-      if (firstName) {
-        _newFullname.push(firstName);
-      }
+    // Normalisasi input --> option
+    const joinedFullname = [firstName?.trim(), lastName?.trim()]
+      .filter(Boolean)
+      .join(" ");
+    
+    const newFullname: [] | [string] = joinedFullname ? [joinedFullname] : [];
 
-      if (lastName) {
-        _newFullname.push(lastName);
-      }
+    const normalizedCountry = country?.trim() ?? "";
+    const newCountry: [] | [string] = normalizedCountry ? [normalizedCountry] : [];
 
-      const newFullname: [] | [string] = [_newFullname.join(" ")];
-      const newUsername: [] | [string] = username ? [username] : [];
-      let newPhoto:
-        | []
-        | [
-            {
-              data: Uint8Array | number[];
-              extension: string;
-            }
-          ] = [];
+    const normalizedUsername = username?.trim() ?? "";
+    const newUsername: [] | [string] = normalizedUsername ? [normalizedUsername] : [];
 
-      if (filesContent.length == 1) {
-        const extension = filesContent[0].name.split(".").reverse()[0];
-        newPhoto = [
-          {
-            extension,
-            data: dataURLToUint8Array(filesContent[0].content),
-          },
-        ];
-      }
 
-      // TODO: tambahin logic loading disini
+    let newPhoto:
+      | []
+      | [
+        {
+          data: Uint8Array | number[];
+          extension: string;
+        }
+      ] = [];
+    
+    if (filesContent.length === 1) {
+      const name = filesContent[0].name ?? "";
+      const extension = (name.split(".").pop() || "jpg").toLowerCase();
+      const bytes = dataURLToUint8Array(filesContent[0].content);
+
+      newPhoto = [
+        {
+          data: bytes,
+          extension,
+        },
+      ];
+    }
+    
+    try {        
+      setLoading(true);
 
       const result = await actor?.edit_user({
         country: newCountry,
@@ -104,20 +119,27 @@ const ProfileSettings = () => {
         photo: newPhoto,
       });
 
-      // console.log(newPhoto[0]?.extension)
-
       if (result && "ok" in result) {
         // navigate("/profile");
-        window.location.reload();
+        toast.success("Profile updated successfully!")
+        setTimeout(() => window.location.reload(), 1500);
       } else if (result && "err" in result) {
         alert(result.err);
         // TODO: perbagus error
+        toast.error(result.err || "Something went wrong");
       }
+    } catch (err) {
+      console.error(err);
+      toast.error("Unexpected error occured!");
+    } finally {
+      setLoading(false);
     }
+
   };
 
   return (
     <div className="min-h-screen w-full lg:max-w-7xl px-6 py-10 text-white">
+      <Toaster position="top-right" />
       <div className="mb-10 text-2xl font-semibold">Profile Settings</div>
 
       {/* TOP Section */}
@@ -163,7 +185,7 @@ const ProfileSettings = () => {
       {/* Detail Form */}
       <div className="mt-14">
         <h2 className="text-xl sm:text-2xl font-semibold mb-4">Details</h2>
-        <form action="" className="space-y-4 w-full lg:max-w-2xl">
+        <form className="space-y-4 w-full lg:max-w-2xl" onSubmit={handleSaveAll}>
           <div className="flex items-center space-x-11">
             <label
               htmlFor="username"
@@ -264,18 +286,18 @@ const ProfileSettings = () => {
           {/* Buttons */}
           <div className="flex space-x-6 mt-10 py-2 items-center justify-center lg:justify-start">
             <button
-              type="submit"
+              type="button"
               className="px-6 py-2 text-base lg:text-xl font-semibold text-white bg-transparen border border-white/20 hover:bg-secondary rounded cursor-pointer"
               onClick={() => navigate("/profile")}
             >
               Cancel
             </button>
             <button
-              onClick={handleSaveAll}
               type="submit"
+              disabled={loading}
               className="px-6 py-2 text-base lg:text-xl font-semibold text-black bg-secondary hover:bg-secondary rounded cursor-pointer"
             >
-              Save All
+              {loading ? "Saving..." : "Save All"}
             </button>
           </div>
         </form>

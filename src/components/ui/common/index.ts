@@ -13,3 +13,6 @@ export { default as CardShare } from "./cards/card-share"
 
 // Navigations
 export { default as BottomTabs } from "./navigation/bottomTabs"
+
+// Popups
+export { default as ConfirmDialog } from "./popups/dialog"
