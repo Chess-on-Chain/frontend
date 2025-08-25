@@ -14,7 +14,7 @@ const Modal = ({ open, onClose, children }: ModalProps) => {
     <div 
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
     >
-      <div className="bg-gray-800 text-white rounded-xl p-6 w-[400px] relative">
+      <div className="bg-primary text-white rounded-xl p-6 w-[400px] relative">
         {/* Tombol Close */}
         <button
           onClick={onClose}

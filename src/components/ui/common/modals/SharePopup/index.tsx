@@ -73,7 +73,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ type, link, onClose }) => {
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-20 mb-2 p-2 text-sm rounded-md outline-none bg-gray-700"
+                className="w-full h-20 mb-2 p-2 text-sm rounded-md outline-none bg-[#1E1E1E]"
             >
             </textarea>
             <p className="text-xs mb-4 text-gray-400">
