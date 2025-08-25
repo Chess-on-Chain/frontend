@@ -17,6 +17,8 @@ import pusher from "../helpers/pusher";
 import type { Channel } from "pusher-js";
 import * as WebsocketTypes from "./../types/WebsocketTypes";
 import { IDL } from "@dfinity/candid";
+import PhotoProfile from "../components/ui/common/image/PhotoProfile";
+import { getCountry } from "../helpers/country";
 
 interface MoveData {
   from_position: string;
@@ -84,7 +86,7 @@ const Gameplay = () => {
         }
 
         let opponent_user = await apiGetUser(opponent_principal);
-        setOpponentUser(opponent_user);
+        setOpponentUser && setOpponentUser(opponent_user);
         setChessPosition(match.fen);
         setCanPlay(true);
         return;
@@ -112,7 +114,7 @@ const Gameplay = () => {
     }
 
     let opponent_user = await apiGetUser(opponent_principal);
-    setOpponentUser(opponent_user);
+    setOpponentUser && setOpponentUser(opponent_user);
 
     let current_fen = match.moves.reverse()[0].fen; // last moves
     setChessPosition(current_fen);
@@ -127,7 +129,7 @@ const Gameplay = () => {
   }, []);
 
   useEffect(() => {
-    setSelfColor(boardOrientation);
+    setSelfColor && setSelfColor(boardOrientation);
     boardOrientationRef.current = boardOrientation;
   }, [boardOrientation]);
 
@@ -135,6 +137,7 @@ const Gameplay = () => {
     if (loaded.current) return;
     if (!identity) return;
     if (identity.getPrincipal().isAnonymous()) return;
+    if (identity.getPrincipal().toText() == "2vxsx-fae") return;
 
     init(identity.getPrincipal());
 
@@ -203,7 +206,7 @@ const Gameplay = () => {
 
     const opponentUser = await apiGetUser(opponentPrincipal);
 
-    setOpponentUser(opponentUser);
+    setOpponentUser && setOpponentUser(opponentUser);
     setBoardOrientation(myOrientation);
     setChessPosition(match.fen);
     setCanPlay(true);
@@ -358,10 +361,13 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
       {/* PLAYER 1 */}
       <div className="flex justify-between itmes-center space-x-2 w-full text-white text-sm">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-full bg-secondary"></div>
+          {/* <div className="w-8 h-8 rounded-full bg-secondary"></div> */}
+          <PhotoProfile fileId={opponent?.photo_id} classSize="w-8 h-8" />
           <div>
             <p>{opponent?.username || opponent?.first_name || "-"}</p>
-            <p className="text-white/50">{opponent?.country || "-"}</p>
+            <p className="text-white/50">
+              {(opponent?.country && getCountry(opponent.country)?.flag) || "-"}
+            </p>
           </div>
         </div>
         <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-1 px-2 text-sm">
@@ -402,10 +408,13 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
       {/* PLAYER 2 */}
       <div className="flex justify-between items-center space-x-2 w-full text-sm text-white">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-full bg-secondary"></div>
+          {/* <div className="w-8 h-8 rounded-full bg-secondary"></div> */}
+          <PhotoProfile fileId={self?.photo_id} classSize="w-8 h-8" />
           <div>
             <p>{self?.username || self?.first_name || "-"}</p>
-            <p className="text-white/50">{self?.country || "-"}</p>
+            {/* <p className="text-white/50">{self?.country || "-"}</p> */}
+              {(self?.country && getCountry(self.country)?.flag) || "-"}
+
           </div>
         </div>
         <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-1 px-2 text-sm">

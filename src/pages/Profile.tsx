@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BtnEditProfile,
   CardHistory,
@@ -7,7 +7,7 @@ import {
 import type { GameHistory, Player } from "../utils/types";
 import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import { useCaller } from "../hooks/canister";
-import { UserContext } from "../context/UserContext";
+import useUser from "../hooks/useUser";
 
 const dataProfile = {
   id: "",
@@ -20,9 +20,9 @@ const Profile = () => {
   const [lists, setLists] = useState<GameHistory[]>([]);
   const [dataProfiles, setDataProfiles] = useState<Player>(dataProfile);
   const auth = useAuth();
-  const caller = useCaller();
+  const actor = useCaller();
 
-  const user = useContext(UserContext);
+  const user = useUser();
   const identity = useIdentity();
 
   useEffect(() => {
@@ -39,7 +39,7 @@ const Profile = () => {
       return;
     }
 
-    caller?.get_histories(identity.getPrincipal(), 0n, 50n).then((response) => {
+    actor?.get_histories(identity.getPrincipal(), 0n, 50n).then((response) => {
       const result: GameHistory[] = [];
 
       if ("ok" in response) {

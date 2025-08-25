@@ -22,7 +22,7 @@ const Dashboard = () => {
   const [dataProfiles, setDataProfiles] = useState<Player>(dataProfile);
   const loaded = useRef(false);
   const identity = useIdentity();
-  const caller = useCaller();
+  const actor = useCaller();
   const user = useContext(UserContext);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ const Dashboard = () => {
     }
 
     if (loaded.current === false) {
-      caller
+      actor
         ?.get_histories(identity.getPrincipal(), 0n, 50n)
         .then((response) => {
           const result: GameHistory[] = [];

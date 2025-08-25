@@ -1,4 +1,8 @@
-import { useAuth, useIsInitializing } from "@nfid/identitykit/react";
+import {
+  useAuth,
+  useIdentity,
+  useIsInitializing,
+} from "@nfid/identitykit/react";
 import { createContext, useEffect, useRef, useState } from "react";
 import { useCaller } from "../hooks/canister";
 import { apiGetUser, type User } from "../helpers/api";
@@ -30,6 +34,15 @@ export function UserProvider({ children }: any) {
       login();
     }
   }, [initializing, auth.user]);
+
+  const identity = useIdentity();
+
+  useEffect(() => {
+    if (!identity) return;
+    if (identity.getPrincipal().toText() == "2vxsx-fae") {
+      auth.disconnect();
+    }
+  }, [identity]);
 
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 }

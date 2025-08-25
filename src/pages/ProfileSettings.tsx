@@ -1,7 +1,6 @@
 import { Camera, ChevronDown } from "lucide-react";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserContext } from "../context/UserContext";
 import { useCaller } from "../hooks/canister";
 import { useFilePicker } from "use-file-picker";
 import {
@@ -10,10 +9,12 @@ import {
   FileTypeValidator,
 } from "use-file-picker/validators";
 import { dataURLToUint8Array, getCacheFile } from "../helpers/utils";
+import useUser from "../hooks/useUser";
+import { countries } from "../helpers/country";
 // import { apiUpdateUser } from "../helpers/api";
 
 const ProfileSettings = () => {
-  const user = useContext(UserContext);
+  const user = useUser();
   const navigate = useNavigate();
 
   // const [firstName, setFirstName] = useState<string | undefined>();
@@ -36,15 +37,7 @@ const ProfileSettings = () => {
 
   useEffect(() => {
     if (filesContent.length == 0) return;
-    // console.log(filesContent);
-    // filesContent[0].content.then((buf) => {
-    //   const blob = new Blob([buf], { type: "image/jpeg" });
-    //   const url = URL.createObjectURL(blob);
-    //   setBgImage(url);
-    // });
-    // console.log(filesContent[0])
-    // const url = URL.createObjectURL(filesContent[0]);
-    // setBgImage(url);
+
     setBgImage(filesContent[0].content);
   }, [filesContent]);
 
@@ -249,10 +242,13 @@ const ProfileSettings = () => {
                 onChange={(e) => setCountry(e.target.value)}
               >
                 <option value="">---</option>
-                <option value="ID">INDONESIA</option>
-                <option value="CH">CHINA</option>
-                <option value="RU">RUSIA</option>
-                <option value="US">USA</option>
+                {countries.map((x) => {
+                  return (
+                    <option value={x.country}>
+                      {x.flag} {x.country_name}
+                    </option>
+                  );
+                })}
               </select>
               <ChevronDown
                 className="absolute right-3 top-3 text-white pointer-events-none"
