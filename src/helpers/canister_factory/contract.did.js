@@ -81,6 +81,7 @@ export const idlFactory = ({ IDL }) => {
     'change_initial_fen' : IDL.Func([IDL.Text], [], ['oneway']),
     'edit_user' : IDL.Func([EditUser], [Result], []),
     'get_active_match' : IDL.Func([IDL.Principal], [Result_9], ['query']),
+    'get_chess_engine' : IDL.Func([], [IDL.Principal], ['query']),
     'get_file' : IDL.Func([IDL.Text], [Result_8], ['query']),
     'get_friends' : IDL.Func([IDL.Principal, IDL.Bool], [Result_7], ['query']),
     'get_histories' : IDL.Func(
@@ -88,6 +89,8 @@ export const idlFactory = ({ IDL }) => {
         [Result_6],
         ['query'],
       ),
+    'get_initial_fen' : IDL.Func([], [IDL.Text], ['query']),
+    'get_last_crojob_executed' : IDL.Func([], [IDL.Nat64], ['query']),
     'get_match' : IDL.Func([IDL.Nat64], [Result_5], ['query']),
     'get_principal_from_username' : IDL.Func([IDL.Text], [Result_4], ['query']),
     'get_user' : IDL.Func([IDL.Principal], [Result_3], ['query']),
