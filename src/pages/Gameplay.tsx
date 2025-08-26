@@ -19,6 +19,8 @@ import * as WebsocketTypes from "./../types/WebsocketTypes";
 import { IDL } from "@dfinity/candid";
 import PhotoProfile from "../components/ui/common/image/PhotoProfile";
 import { getCountry } from "../helpers/country";
+import { ConfirmDialog } from "../components/ui/common";
+import { toArrayBuffer } from "../helpers/utils";
 
 interface MoveData {
   from_position: string;
@@ -150,28 +152,34 @@ const Gameplay = () => {
     channelWebsocket.current = channel;
 
     channel.bind("match_created", async (data: any) => {
-      const body = new Uint8Array(Object.values(data));
+      // const body = new Uint8Array(Object.values(data));
+      const buf = toArrayBuffer(data);
       const candid = WebsocketTypes.MatchCreatedCandid;
 
-      const value = IDL.decode([candid], body);
+      const value = IDL.decode([candid], buf)
+      // const value = IDL.decode([candid], body);
       const match: WebsocketTypes.MatchCreated = value[0] as any;
       await onMatchCreated(principal, match);
     });
 
     channel.bind("move_created", async (data: any) => {
-      const body = new Uint8Array(Object.values(data));
+      // const body = new Uint8Array(Object.values(data));
+      const buf = toArrayBuffer(data);
       const candid = WebsocketTypes.MoveCreatedCandid;
 
-      const value = IDL.decode([candid], body);
+      const value = IDL.decode([candid], buf)
+      // const value = IDL.decode([candid], body);
       const move: WebsocketTypes.MoveCreated = value[0] as any;
       await onMoveCreated(move);
     });
 
     channel.bind("match_finished", async (data: any) => {
-      const body = new Uint8Array(Object.values(data));
+      // const body = new Uint8Array(Object.values(data));
+      const buf = toArrayBuffer(data);
       const candid = WebsocketTypes.MatchFinishedCandid;
 
-      const value = IDL.decode([candid], body);
+      const value = IDL.decode([candid], buf)
+      // const value = IDL.decode([candid], body);
       const match: WebsocketTypes.MatchFinished = value[0] as any;
       await onMatchFinished(match);
     });
@@ -338,6 +346,8 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
   const { self, opponent, selfColor } = useContext(MatchContext);
   const { timeColor, timeLeft } = useMatchTimer();
   const { selfPawnDawn, opponentPawnDawn } = usePawnDawn();
+  
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const [opponentColor, setOpponentColor] = useState<
     "white" | "black" | undefined
@@ -449,9 +459,10 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
       <div className="flex justify-center items-center w-full my-8">
         <button
           className="text-center block cursor-pointer"
-          onClick={() => {
-            actor?.resign();
-          }}
+          onClick={() => setShowConfirm(true)}
+          // onClick={() => {
+          //   actor?.resign();
+          // }}
         >
           <div className="p-3.5 rounded-full mb-1 5 mx-auto bg-secondary">
             {/* <Link to="/"> */}
@@ -461,12 +472,22 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
           <p className="text-white">Resign</p>
         </button>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => actor?.resign()}
+        message="Are you sure you want to resign?"
+      />
     </div>
   );
 };
 
 const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
   const actor = useCaller();
+  const [showConfirm, setShowConfirm] = useState(false);
+
 
   return (
     <div className="hidden lg:flex items-center justify-center w-full h-full space-x-4">
@@ -475,9 +496,10 @@ const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
         <div className="flex justify-center items-center w-full lg:w-3/5 h-full">
           <button
             className="mx-auto text-center block cursor-pointer"
-            onClick={() => {
-              actor && actor.resign();
-            }}
+            onClick={() => setShowConfirm(true)}
+            // onClick={() => {
+            //   actor && actor.resign();
+            // }}
           >
             <div className="p-4.5 mx-auto rounded-full mb-1 5 bg-secondary">
               <Link to="/">
@@ -488,6 +510,14 @@ const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
           </button>
         </div>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => actor?.resign()}
+        message="Are you sure you want to resign?"
+      />
 
       {/* MIDDLE - BOARD */}
       <div className="aspect-square w-full max-w-[700px] bg-white">

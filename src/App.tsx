@@ -15,6 +15,7 @@ import ConnectSuccessContext from "./context/ConnectSuccessContext";
 import { UserProvider } from "./context/UserContext";
 import { MatchProvider } from "./context/MatchContext";
 import { ToastContainer } from "react-toastify";
+import Friends from "./pages/Friends";
 
 function Provider({ children }: any) {
   const [isConnect, setIsConnect] = useState(false);
@@ -50,6 +51,7 @@ function Home() {
             <Route path="/" element={<BaseLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/friends" element={<Friends />} />
               <Route path="/profile/edit" element={<ProfileSettings />} />
               <Route path="/gameplay/coming-soon" element={<ComingSoon />} />
             </Route>

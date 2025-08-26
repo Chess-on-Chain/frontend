@@ -1,4 +1,4 @@
-import { Camera, ChevronDown } from "lucide-react";
+import { Camera } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCaller } from "../hooks/canister";
@@ -10,8 +10,8 @@ import {
 } from "use-file-picker/validators";
 import { dataURLToUint8Array, getCacheFile } from "../helpers/utils";
 import useUser from "../hooks/useUser";
-import { countries } from "../helpers/country";
 import { toast } from "react-toastify";
+// import toast from "react-hot-toast";
 // import { apiUpdateUser } from "../helpers/api";
 
 const ProfileSettings = () => {
@@ -24,6 +24,7 @@ const ProfileSettings = () => {
   const [country, setCountry] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [bgImage, setBgImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const actor = useCaller();
   const { openFilePicker, filesContent: imageFilesContent } = useFilePicker({
@@ -53,47 +54,59 @@ const ProfileSettings = () => {
       });
   }, [user]);
 
-  const handleSaveAll = async (e: React.FormEvent) => {
+  const handleSaveAll = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (user?.id) {
-      const newCountry: [] | [string] = country ? [country] : [];
-      let _newFullname: string[] = [];
+    if (!user?.id) {
+      toast.error("User not found");
+      return;
+    }
+    if (!actor) {
+      toast.error("Service not ready. Please try again.");
+      return;
+    }
 
-      if (firstName) {
-        _newFullname.push(firstName);
-      }
+    // Normalisasi input --> option
+    const joinedFullname = [firstName?.trim(), lastName?.trim()]
+      .filter(Boolean)
+      .join(" ");
 
-      if (lastName) {
-        _newFullname.push(lastName);
-      }
+    const newFullname: [] | [string] = joinedFullname ? [joinedFullname] : [];
 
-      const newFullname: [] | [string] = [_newFullname.join(" ")];
-      const newUsername: [] | [string] = username ? [username] : [];
-      let newPhoto:
-        | []
-        | [
-            {
-              data: Uint8Array | number[];
-              extension: string;
-            }
-          ] = [];
+    const normalizedCountry = country?.trim() ?? "";
+    const newCountry: [] | [string] = normalizedCountry
+      ? [normalizedCountry]
+      : [];
 
-      if (imageFilesContent.length == 1) {
-        const extension = imageFilesContent[0].name.split(".").reverse()[0];
-        newPhoto = [
+    const normalizedUsername = username?.trim() ?? "";
+    const newUsername: [] | [string] = normalizedUsername
+      ? [normalizedUsername]
+      : [];
+
+    let newPhoto:
+      | []
+      | [
           {
-            extension,
-            data: dataURLToUint8Array(imageFilesContent[0].content),
-          },
-        ];
-      }
+            data: Uint8Array | number[];
+            extension: string;
+          }
+        ] = [];
 
-      // TODO: toastify berat ganti yang lain
-      toast.info("Loading...", {
-        isLoading: true,
-        autoClose: false,
-      });
+    if (imageFilesContent.length === 1) {
+      const name = imageFilesContent[0].name ?? "";
+      const extension = (name.split(".").pop() || "jpg").toLowerCase();
+      const bytes = dataURLToUint8Array(imageFilesContent[0].content);
+
+      newPhoto = [
+        {
+          data: bytes,
+          extension,
+        },
+      ];
+    }
+
+    try {
+      setLoading(true);
 
       const result = await actor?.edit_user({
         country: newCountry,
@@ -102,17 +115,18 @@ const ProfileSettings = () => {
         photo: newPhoto,
       });
 
-      // console.log(newPhoto[0]?.extension)
-
       if (result && "ok" in result) {
         // navigate("/profile");
-        window.location.reload();
+        toast.success("Profile updated successfully!");
+        setTimeout(() => window.location.reload(), 1500);
       } else if (result && "err" in result) {
-        // TODO: toastify berat ganti yang lain
-        toast.error(result.err, {
-          autoClose: false,
-        });
+        toast.error(result.err || "Something went wrong");
       }
+    } catch (err) {
+      console.error(err);
+      toast.error("Unexpected error occured!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -164,7 +178,10 @@ const ProfileSettings = () => {
         {/* Detail Form */}
         <div className="mt-14">
           <h2 className="text-xl sm:text-2xl font-semibold mb-4">Details</h2>
-          <form action="" className="space-y-4 w-full lg:max-w-2xl">
+          <form
+            className="space-y-4 w-full lg:max-w-2xl"
+            onSubmit={handleSaveAll}
+          >
             <div className="flex items-center space-x-11">
               <label
                 htmlFor="username"
@@ -215,71 +232,21 @@ const ProfileSettings = () => {
               </div>
             </div>
 
-            <div className="flex items-center space-x-9">
-              <label
-                htmlFor="lastName"
-                className="block mb-1 text-lg sm:text-xl text-gray-400"
-              >
-                Last Name
-              </label>
-              <div className="flex-1 flex items-center">
-                <input
-                  type="text"
-                  name="lastName"
-                  value={lastName ?? ""}
-                  onChange={(e) => setLastName(e.target.value)}
-                  id="lastName"
-                  className="w-full px-3 py-2 text-lg tracking-wide text-white bg-black border border-white/20 rounded"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-14 text-white">
-              <label
-                htmlFor="country"
-                className="block mb-1 text-lg sm:text-xl text-gray-400"
-              >
-                Country
-              </label>
-              <div className="relative flex-1 flex items-center">
-                <select
-                  name="country"
-                  id="country"
-                  className="w-full px-3 py-2 text-lg tracking-wide border border-white/20 bg-black text-white appearance-none"
-                  value={country ?? ""}
-                  onChange={(e) => setCountry(e.target.value)}
-                >
-                  <option value="">---</option>
-                  {countries.map((x) => {
-                    return (
-                      <option key={x.country} value={x.country}>
-                        {x.flag} {x.country_name}
-                      </option>
-                    );
-                  })}
-                </select>
-                <ChevronDown
-                  className="absolute right-3 top-3 text-white pointer-events-none"
-                  size={18}
-                />
-              </div>
-            </div>
-
             {/* Buttons */}
             <div className="flex space-x-6 mt-10 py-2 items-center justify-center lg:justify-start">
               <button
-                type="submit"
+                type="button"
                 className="px-6 py-2 text-base lg:text-xl font-semibold text-white bg-transparen border border-white/20 hover:bg-secondary rounded cursor-pointer"
                 onClick={() => navigate("/profile")}
               >
                 Cancel
               </button>
               <button
-                onClick={handleSaveAll}
                 type="submit"
+                disabled={loading}
                 className="px-6 py-2 text-base lg:text-xl font-semibold text-black bg-secondary hover:bg-secondary rounded cursor-pointer"
               >
-                Save All
+                {loading ? "Saving..." : "Save All"}
               </button>
             </div>
           </form>
