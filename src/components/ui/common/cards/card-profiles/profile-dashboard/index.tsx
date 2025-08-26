@@ -1,14 +1,14 @@
-import { useContext } from "react";
-import { UserContext } from "../../../../../../context/UserContext";
 import type { Player } from "../../../../../../utils/types";
 import PhotoProfile from "../../../image/PhotoProfile";
+import useUser from "../../../../../../hooks/useUser";
+import { getCountry } from "../../../../../../helpers/country";
 
 type ProfileProps = {
   data: Player;
 };
 
 export default function Profile({ data }: ProfileProps) {
-  const user = useContext(UserContext);
+  const user = useUser();
 
   return (
     <div className="flex items-center gap-3">
@@ -20,7 +20,7 @@ export default function Profile({ data }: ProfileProps) {
         <div className="flex items-center gap-1 text-white/90">
           <span className="lg:text-base font-semibold">{data.username}</span>
           <span className="w-1 h-1 bg-white/50 rounded-full" />
-          <span className="text-white/50 text-xs">{data.country}</span>
+          <span className="text-white/50 text-xs">{getCountry(data.country)?.flag}</span>
         </div>
         <div className="text-xs text-white/60">
           Score:{" "}

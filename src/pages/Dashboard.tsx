@@ -9,6 +9,7 @@ import type { GameHistory, Player } from "../utils/types";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useCaller } from "../hooks/canister";
 import { UserContext } from "../context/UserContext";
+import { PopupLayout } from "../components/ui/layout/PopupLayout";
 
 const dataProfile = {
   id: 0,
@@ -22,7 +23,7 @@ const Dashboard = () => {
   const [dataProfiles, setDataProfiles] = useState<Player>(dataProfile);
   const loaded = useRef(false);
   const identity = useIdentity();
-  const caller = useCaller();
+  const actor = useCaller();
   const user = useContext(UserContext);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ const Dashboard = () => {
     }
 
     if (loaded.current === false) {
-      caller
+      actor
         ?.get_histories(identity.getPrincipal(), 0n, 50n)
         .then((response) => {
           const result: GameHistory[] = [];
@@ -115,22 +116,25 @@ const Dashboard = () => {
   }, [loaded, identity, user]);
 
   return (
-    <div className="dashboard-content">
-      <div className="content">
-        {/* Left Side: Cards */}
-        <div className="flex flex-col gap-12 lg:gap-14 w-full md:max-w-xs">
-          {/* Profile Header */}
-          <div className="flex justify-between items-center">
-            <ProfileDashboard data={dataProfiles} />
-            <BtnToProfile />
+    <>
+      <PopupLayout />
+      <div className="dashboard-content">
+        <div className="content">
+          {/* Left Side: Cards */}
+          <div className="flex flex-col gap-12 lg:gap-14 w-full md:max-w-xs">
+            {/* Profile Header */}
+            <div className="flex justify-between items-center">
+              <ProfileDashboard data={dataProfiles} />
+              <BtnToProfile />
+            </div>
+            {/* Section - Match Type Menu */}
+            <MatchTypeMenu />
           </div>
-          {/* Section - Match Type Menu */}
-          <MatchTypeMenu />
+          {/* Right Side: Game History */}
+          <CardHistory data={lists} />
         </div>
-        {/* Right Side: Game History */}
-        <CardHistory data={lists} />
       </div>
-    </div>
+    </>
   );
 };
 

@@ -3,15 +3,6 @@ import { MatchContext } from "../context/MatchContext";
 import { BoardContext } from "../context/BoardContext";
 import { Chess } from "chess.js";
 
-// const pawnEmoji: any = {
-//   b: ["♗", "♝"],
-//   k: ["♔", "♚"],
-//   n: ["♘", "♞"],
-//   p: ["♙", "♟"],
-//   q: ["♕", "♛"],
-//   r: ["♖", "♜"],
-// };
-
 const pieces = ["b", "k", "n", "q", "p", "r"];
 const colors = ["w", "b"];
 

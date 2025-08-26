@@ -14,6 +14,7 @@ import { useContext, useState } from "react";
 import ConnectSuccessContext from "./context/ConnectSuccessContext";
 import { UserProvider } from "./context/UserContext";
 import { MatchProvider } from "./context/MatchContext";
+import { ToastContainer } from "react-toastify";
 import Friends from "./pages/Friends";
 
 function Provider({ children }: any) {
@@ -87,7 +88,10 @@ function Home() {
 function App() {
   return (
     <Provider>
-      <Home />
+      <>
+        <Home />
+        <ToastContainer />
+      </>
     </Provider>
   );
 }

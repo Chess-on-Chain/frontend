@@ -17,30 +17,35 @@ type User =
    username: opt text;
    win: nat16;
  };
-type Result_8 = 
+type Result_9 = 
  variant {
    err: text;
    ok: MatchResultHistory;
  };
-type Result_7 = 
+type Result_8 = 
  variant {
    err: text;
    ok: File;
  };
-type Result_6 = 
+type Result_7 = 
  variant {
    err: text;
    ok: vec User;
  };
-type Result_5 = 
+type Result_6 = 
  variant {
    err: text;
    ok: vec MatchResultHistory;
  };
-type Result_4 = 
+type Result_5 = 
  variant {
    err: text;
    ok: MatchResult;
+ };
+type Result_4 = 
+ variant {
+   err: text;
+   ok: principal;
  };
 type Result_3 = 
  variant {
@@ -127,13 +132,17 @@ service : {
   cancel_match_room: () -> ();
   change_initial_fen: (new_initial_fen: text) -> () oneway;
   edit_user: (new_user: EditUser) -> (Result);
-  get_active_match: (user_principal: principal) -> (Result_8) query;
-  get_file: (file_id_hex: text) -> (Result_7) query;
+  get_active_match: (user_principal: principal) -> (Result_9) query;
+  get_chess_engine: () -> (principal) query;
+  get_file: (file_id_hex: text) -> (Result_8) query;
   get_friends: (user_principal: principal, incoming: bool) ->
-   (Result_6) query;
+   (Result_7) query;
   get_histories: (user_principal: principal, start: nat, max: nat) ->
-   (Result_5) query;
-  get_match: (match_id: nat64) -> (Result_4) query;
+   (Result_6) query;
+  get_initial_fen: () -> (text) query;
+  get_last_crojob_executed: () -> (nat64) query;
+  get_match: (match_id: nat64) -> (Result_5) query;
+  get_principal_from_username: (username: text) -> (Result_4) query;
   get_user: (user_id: principal) -> (Result_3) query;
   initialize: (_owner: principal, _chess_engine_principal: principal) ->
    () oneway;

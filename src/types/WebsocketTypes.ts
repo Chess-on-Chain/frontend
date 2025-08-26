@@ -47,3 +47,41 @@ export const MatchFinishedCandid = IDL.Record({
 export interface MatchFinished {
   winner: "white" | "black" | "draw";
 }
+
+// public type InviteMatchMessage = {
+//   // invite_match
+//   from : Principal;
+// };
+//   public type SendFriendshipMessage = {
+//   // incoming_friendship
+//   from : Principal;
+// };
+
+// public type AcceptFriendshipMessage = {
+//   // accepted_friendship
+//   from : Principal;
+// };
+
+export const InviteMatchCandid = IDL.Record({
+  from: IDL.Principal,
+});
+
+export interface InviteMatch {
+  from: Principal;
+}
+
+export const SendFriendshipCandid = IDL.Record({
+  from: IDL.Principal,
+});
+
+export interface SendFriendship {
+  from: Principal;
+}
+
+export const AcceptFriendshipCandid = IDL.Record({
+  from: IDL.Principal,
+});
+
+export interface AcceptFriendship {
+  from: Principal;
+}

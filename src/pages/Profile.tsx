@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BtnEditProfile,
   CardHistory,
@@ -7,7 +7,8 @@ import {
 import type { GameHistory, Player } from "../utils/types";
 import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import { useCaller } from "../hooks/canister";
-import { UserContext } from "../context/UserContext";
+import useUser from "../hooks/useUser";
+import { PopupLayout } from "../components/ui/layout/PopupLayout";
 
 const dataProfile = {
   id: "",
@@ -20,9 +21,9 @@ const Profile = () => {
   const [lists, setLists] = useState<GameHistory[]>([]);
   const [dataProfiles, setDataProfiles] = useState<Player>(dataProfile);
   const auth = useAuth();
-  const caller = useCaller();
+  const actor = useCaller();
 
-  const user = useContext(UserContext);
+  const user = useUser();
   const identity = useIdentity();
 
   useEffect(() => {
@@ -39,7 +40,7 @@ const Profile = () => {
       return;
     }
 
-    caller?.get_histories(identity.getPrincipal(), 0n, 50n).then((response) => {
+    actor?.get_histories(identity.getPrincipal(), 0n, 50n).then((response) => {
       const result: GameHistory[] = [];
 
       if ("ok" in response) {
@@ -111,18 +112,22 @@ const Profile = () => {
   }, [auth.user, user]);
 
   return (
-    <div className="profile-content">
-      <div className="content">
-        <div className="flex flex-col gap-12 lg:gap-14 w-full px-2 py-8 border-b border-white/20">
-          {/* Profile Header */}
-          <div className="flex justify-between items-center mb-6">
-            <CardProfile data={dataProfiles} />
-            <BtnEditProfile />
+    <>
+      <PopupLayout />
+
+      <div className="profile-content">
+        <div className="content">
+          <div className="flex flex-col gap-12 lg:gap-14 w-full px-2 py-8 border-b border-white/20">
+            {/* Profile Header */}
+            <div className="flex justify-between items-center mb-6">
+              <CardProfile data={dataProfiles} />
+              <BtnEditProfile />
+            </div>
           </div>
+          <CardHistory data={lists} />
         </div>
-        <CardHistory data={lists} />
       </div>
-    </div>
+    </>
   );
 };
 

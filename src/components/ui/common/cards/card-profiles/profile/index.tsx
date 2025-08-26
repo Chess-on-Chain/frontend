@@ -2,6 +2,7 @@ import { useContext } from "react";
 import type { Player } from "../../../../../../utils/types";
 import PhotoProfile from "../../../image/PhotoProfile";
 import { UserContext } from "../../../../../../context/UserContext";
+import { getCountry } from "../../../../../../helpers/country";
 
 type ProfileProps = {
   data: Player;
@@ -20,7 +21,7 @@ export default function CardProfile({ data }: ProfileProps) {
           <span className="w-2 h-2 translate-y-0.5 bg-white/50 rounded-full" />
           <span className=" mt-1.5 text-sm sm:text-base lg:text-xl text-gray-400">
             {" "}
-            {data.country}
+            {getCountry(data.country)?.flag}
           </span>
         </div>
         <div className="my-px lg:text-xl text-gray-400">

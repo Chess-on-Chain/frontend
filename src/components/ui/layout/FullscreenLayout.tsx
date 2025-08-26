@@ -5,7 +5,7 @@ import { MatchContext } from "../../../context/MatchContext";
 import { getTimerColorClass, useMatchTimer } from "../../../hooks/timer";
 import { usePawnDawn } from "../../../hooks/pawnDawn";
 import PhotoProfile from "../common/image/PhotoProfile";
-import { UserContext } from "../../../context/UserContext";
+import { getCountry } from "../../../helpers/country";
 
 const pawnEmoji: any = {
   b: ["♗", "♝"],
@@ -30,8 +30,6 @@ const FullscreenGameLayout = ({ children }: any) => {
   const { timeColor, timeLeft } = useMatchTimer(60);
   const { selfPawnDawn, opponentPawnDawn } = usePawnDawn();
 
-  const user = useContext(UserContext);
-
   return (
     // <div className="w-screen h-screen overflow-hidden flex items-center justify-center text-wite">
     <div className="w-screen h-screen flex flex-col text-white">
@@ -42,7 +40,7 @@ const FullscreenGameLayout = ({ children }: any) => {
             <div className="flex gap-4">
               {/* <div className="w-12 h-12 rounded-full bg-linear_gradient" /> */}
               <PhotoProfile
-                fileId={user?.photo_id}
+                fileId={self?.photo_id}
                 classSize="w-12 h-12"
               ></PhotoProfile>
               <div className="max-w-[100px] text-white text-sm leading-tight">
@@ -50,13 +48,14 @@ const FullscreenGameLayout = ({ children }: any) => {
                   {self?.username || self?.first_name || "Guest"}
                 </div>
                 <div className="text-white/50 text-xs lg:text-base">
-                  {self?.country || "-"} - {self?.score || 0}
+                  {(self?.country && getCountry(self.country)?.flag) || "-"}-{" "}
+                  {self?.score || 0}
                 </div>
               </div>
             </div>
             <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-4 px-2 text-sm">
-              {selfPawnDawn &&
-                Object.entries(selfPawnDawn).map(
+              {opponentPawnDawn &&
+                Object.entries(opponentPawnDawn).map(
                   ([piece, total]: [any, any]) => {
                     return (
                       <div
@@ -103,8 +102,8 @@ const FullscreenGameLayout = ({ children }: any) => {
           {/* Kanan */}
           <div className="flex items-center justify-end gap-4">
             <div className="text-white flex flex-row-reverse gap-2 mr-4 px-2 text-sm overflow-x-scroll whitespace-nowrap hide-scrollbar">
-              {opponentPawnDawn &&
-                Object.entries(opponentPawnDawn).map(
+              {selfPawnDawn &&
+                Object.entries(selfPawnDawn).map(
                   ([piece, total]: [any, number]) => {
                     return (
                       <div
@@ -124,7 +123,9 @@ const FullscreenGameLayout = ({ children }: any) => {
                   {opponent?.username || opponent?.first_name || "Guest"}
                 </div>
                 <div className="text-white/50 text-xs lg:text-base">
-                  {self?.country || "-"} - {self?.score || 0}
+                  {(opponent?.country && getCountry(opponent.country)?.flag) ||
+                    "-"}
+                  - {opponent?.score || 0}
                 </div>
               </div>
               {/* <div className="w-12 h-12 rounded-full bg-linear_gradient" /> */}
