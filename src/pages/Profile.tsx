@@ -1,13 +1,14 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BtnEditProfile,
   CardHistory,
   CardProfile,
 } from "../components/ui/common";
 import type { GameHistory, Player } from "../utils/types";
-import { useAuth } from "@nfid/identitykit/react";
+import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import { useCaller } from "../hooks/canister";
-import { UserContext } from "../context/UserContext";
+import useUser from "../hooks/useUser";
+import { PopupLayout } from "../components/ui/layout/PopupLayout";
 
 const dataProfile = {
   id: "",
@@ -19,16 +20,13 @@ const dataProfile = {
 const Profile = () => {
   const [lists, setLists] = useState<GameHistory[]>([]);
   const [dataProfiles, setDataProfiles] = useState<Player>(dataProfile);
-  // const loaded = useRef(false);
   const auth = useAuth();
-  const caller = useCaller();
+  const actor = useCaller();
 
-  const user = useContext(UserContext);
-  const loaded = useRef(false);
+  const user = useUser();
+  const identity = useIdentity();
 
   useEffect(() => {
-    if (loaded.current) return;
-
     if (user) {
       setDataProfiles({
         country: user.country || "-",
@@ -38,16 +36,16 @@ const Profile = () => {
       });
     }
 
-    if (!auth.user) {
+    if (!auth.user || !identity) {
       return;
     }
-    
-    loaded.current = true;
 
-    caller
-      .get_histories(auth.user.principal, 0, 20)
-      .then((histories: any[]) => {
-        const result: GameHistory[] = [];
+    actor?.get_histories(identity.getPrincipal(), 0n, 50n).then((response) => {
+      const result: GameHistory[] = [];
+
+      if ("ok" in response) {
+        const histories = response.ok;
+
         for (const history of histories.reverse()) {
           const date = new Date(Number(history.time / BigInt(10 ** 6)));
 
@@ -84,6 +82,7 @@ const Profile = () => {
             history.white_player.toText() == auth.user?.principal.toText()
               ? "white"
               : "black";
+
           let status = "Draw";
 
           if (history.winner == "ongoing") return;
@@ -95,36 +94,40 @@ const Profile = () => {
           }
 
           result.push({
-            id: history.id,
+            id: history.id.toString(),
             date: dateString,
             moves: history.moves.length,
             players: [],
             result: status,
           });
         }
+      }
 
-        setLists(result);
-      });
+      setLists(result);
+    });
 
     return () => {
       console.log("clean up");
     };
-  }, [user, auth]);
+  }, [auth.user, user]);
 
-  console.log(lists);
   return (
-    <div className="profile-content">
-      <div className="content">
-        <div className="flex flex-col gap-12 lg:gap-14 w-full px-2 py-8 border-b border-white/20">
-          {/* Profile Header */}
-          <div className="flex justify-between items-center mb-6">
-            <CardProfile data={dataProfiles} />
-            <BtnEditProfile />
+    <>
+      <PopupLayout />
+
+      <div className="profile-content">
+        <div className="content">
+          <div className="flex flex-col gap-12 lg:gap-14 w-full px-2 py-8 border-b border-white/20">
+            {/* Profile Header */}
+            <div className="flex justify-between items-center mb-6">
+              <CardProfile data={dataProfiles} />
+              <BtnEditProfile />
+            </div>
           </div>
+          <CardHistory data={lists} />
         </div>
-        <CardHistory data={lists} />
       </div>
-    </div>
+    </>
   );
 };
 

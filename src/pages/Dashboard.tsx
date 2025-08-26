@@ -9,6 +9,7 @@ import type { GameHistory, Player } from "../utils/types";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useCaller } from "../hooks/canister";
 import { UserContext } from "../context/UserContext";
+import { PopupLayout } from "../components/ui/layout/PopupLayout";
 
 const dataProfile = {
   id: 0,
@@ -22,7 +23,7 @@ const Dashboard = () => {
   const [dataProfiles, setDataProfiles] = useState<Player>(dataProfile);
   const loaded = useRef(false);
   const identity = useIdentity();
-  const caller = useCaller();
+  const actor = useCaller();
   const user = useContext(UserContext);
 
   useEffect(() => {
@@ -40,63 +41,69 @@ const Dashboard = () => {
     }
 
     if (loaded.current === false) {
-      caller
-        .get_histories(identity.getPrincipal(), 0, 20)
-        .then((histories: any[]) => {
+      actor
+        ?.get_histories(identity.getPrincipal(), 0n, 50n)
+        .then((response) => {
           const result: GameHistory[] = [];
-          for (const history of histories.reverse()) {
-            const date = new Date(Number(history.time / BigInt(10 ** 6)));
 
-            const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-            const months = [
-              "Jan",
-              "Feb",
-              "Mar",
-              "Apr",
-              "May",
-              "Jun",
-              "Jul",
-              "Aug",
-              "Sep",
-              "Oct",
-              "Nov",
-              "Dec",
-            ];
+          if ("ok" in response) {
+            const histories = response.ok;
 
-            const dayName = days[date.getDay()];
-            const day = String(date.getDate()).padStart(2, "0");
-            const month = months[date.getMonth()];
-            const year = String(date.getFullYear()).slice(-2); // Ambil 2 digit terakhir
+            for (const history of histories.reverse()) {
+              const date = new Date(Number(history.time / BigInt(10 ** 6)));
 
-            let hour = date.getHours();
-            const minute = String(date.getMinutes()).padStart(2, "0");
-            const period = hour >= 12 ? "PM" : "AM";
-            hour = hour % 12;
-            hour = hour === 0 ? 12 : hour; // ubah 0 jadi 12 untuk format 12-jam
+              const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+              const months = [
+                "Jan",
+                "Feb",
+                "Mar",
+                "Apr",
+                "May",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec",
+              ];
 
-            const dateString = `${dayName}, ${day} ${month} ${year} ${hour}:${minute} ${period}`;
+              const dayName = days[date.getDay()];
+              const day = String(date.getDate()).padStart(2, "0");
+              const month = months[date.getMonth()];
+              const year = String(date.getFullYear()).slice(-2); // Ambil 2 digit terakhir
 
-            const myColor =
-              history.white_player.toText() == identity.getPrincipal().toText()
-                ? "white"
-                : "black";
-            let status = "Draw";
+              let hour = date.getHours();
+              const minute = String(date.getMinutes()).padStart(2, "0");
+              const period = hour >= 12 ? "PM" : "AM";
+              hour = hour % 12;
+              hour = hour === 0 ? 12 : hour; // ubah 0 jadi 12 untuk format 12-jam
 
-            if (history.winner == "ongoing") return;
-            if (history.winner == "draw") {
-            } else if (history.winner == myColor) {
-              status = "Victory";
-            } else {
-              status = "Defeat";
+              const dateString = `${dayName}, ${day} ${month} ${year} ${hour}:${minute} ${period}`;
+
+              const myColor =
+                history.white_player.toText() ==
+                identity.getPrincipal().toText()
+                  ? "white"
+                  : "black";
+              let status = "Draw";
+
+              if (history.winner == "ongoing") return;
+              if (history.winner == "draw") {
+              } else if (history.winner == myColor) {
+                status = "Victory";
+              } else {
+                status = "Defeat";
+              }
+
+              result.push({
+                id: history.id.toString(),
+                date: dateString,
+                moves: history.moves.length,
+                players: [],
+                result: status,
+              });
             }
-
-            result.push({
-              id: history.id,
-              date: dateString,
-              moves: history.moves.length,
-              players: [],
-              result: status,
-            });
           }
 
           setLists(result);
@@ -109,22 +116,25 @@ const Dashboard = () => {
   }, [loaded, identity, user]);
 
   return (
-    <div className="dashboard-content">
-      <div className="content">
-        {/* Left Side: Cards */}
-        <div className="flex flex-col gap-12 lg:gap-14 w-full md:max-w-xs">
-          {/* Profile Header */}
-          <div className="flex justify-between items-center">
-            <ProfileDashboard data={dataProfiles} />
-            <BtnToProfile />
+    <>
+      <PopupLayout />
+      <div className="dashboard-content">
+        <div className="content">
+          {/* Left Side: Cards */}
+          <div className="flex flex-col gap-12 lg:gap-14 w-full md:max-w-xs">
+            {/* Profile Header */}
+            <div className="flex justify-between items-center">
+              <ProfileDashboard data={dataProfiles} />
+              <BtnToProfile />
+            </div>
+            {/* Section - Match Type Menu */}
+            <MatchTypeMenu />
           </div>
-          {/* Section - Match Type Menu */}
-          <MatchTypeMenu />
+          {/* Right Side: Game History */}
+          <CardHistory data={lists} />
         </div>
-        {/* Right Side: Game History */}
-        <CardHistory data={lists} />
       </div>
-    </div>
+    </>
   );
 };
 

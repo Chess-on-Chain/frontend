@@ -11,10 +11,11 @@ import ProfileSettings from "./pages/ProfileSettings";
 import { BoardProvider } from "./context/BoardContext";
 import ComingSoon from "./pages/ComingSoon";
 import { useContext, useState } from "react";
-import { clearToken } from "./helpers/api";
 import ConnectSuccessContext from "./context/ConnectSuccessContext";
 import { UserProvider } from "./context/UserContext";
 import { MatchProvider } from "./context/MatchContext";
+import { ToastContainer } from "react-toastify";
+import Friends from "./pages/Friends";
 
 function Provider({ children }: any) {
   const [isConnect, setIsConnect] = useState(false);
@@ -34,8 +35,12 @@ function Home() {
       authType={IdentityKitAuthType.DELEGATION}
       signerClientOptions={{
         targets: (import.meta.env.VITE_CANISTER_TARGET as string).split(","),
+        idleOptions: {
+          disableIdle: true,
+        },
+        maxTimeToLive: 259200000000000n,
       }}
-      onDisconnect={() => clearToken()}
+      onDisconnect={() => {}}
       onConnectSuccess={() => {
         setIsConnect(true);
       }}
@@ -46,6 +51,7 @@ function Home() {
             <Route path="/" element={<BaseLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/friends" element={<Friends />} />
               <Route path="/profile/edit" element={<ProfileSettings />} />
               <Route path="/gameplay/coming-soon" element={<ComingSoon />} />
             </Route>
@@ -82,7 +88,10 @@ function Home() {
 function App() {
   return (
     <Provider>
-      <Home />
+      <>
+        <Home />
+        <ToastContainer />
+      </>
     </Provider>
   );
 }

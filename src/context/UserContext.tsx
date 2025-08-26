@@ -1,51 +1,66 @@
-import { createContext, useEffect, useState } from "react";
-import { apiGetMe, apiLogin, type User } from "../helpers/api";
-import { useAuth, useIsInitializing } from "@nfid/identitykit/react";
+import {
+  useAuth,
+  useIdentity,
+  useIsInitializing,
+} from "@nfid/identitykit/react";
+import { createContext, useEffect, useRef, useState } from "react";
 import { useCaller } from "../hooks/canister";
-import { sha1 } from "js-sha1";
-import { Buffer } from "buffer";
-export const UserContext = createContext<User | undefined>(undefined);
+import { apiGetUser, type User } from "../helpers/api";
+import { toast, type Id } from "react-toastify";
 
-function randomBytes(length: number) {
-  const bytes = new Uint8Array(length);
-  for (let i = 0; i < length; i++) {
-    bytes[i] = Math.floor(Math.random() * 256); // 0 - 255
-  }
-  return bytes;
-}
+export const UserContext = createContext<User | undefined>(undefined);
 
 export function UserProvider({ children }: any) {
   const [user, setUser] = useState<User | undefined>();
-  // const signer = useSigner();
   const auth = useAuth();
   const initializing = useIsInitializing();
   const actor = useCaller();
+  const loaded = useRef(false);
+  const toastLoaded = useRef(false);
+  let toastId = useRef<Id | null>(null);
 
   useEffect(() => {
-    if (!initializing && auth.user) {
-      const loginKey = Buffer.from(randomBytes(20));
-      const loginKeyHex = loginKey.toString("hex");
-      const loginKeyHashedHex = sha1(loginKey);
+    if (toastLoaded.current) return;
+    toastId.current = toast.info("Please wait...", {
+      isLoading: true,
+      autoClose: false,
+    });
+    toastLoaded.current = true;
+  }, []);
 
-      const login = () => {
-        const result = apiGetMe();
-        result.then((user) => {
-          setUser(user as User);
-        });
-        result.catch(() => {
-          actor.login(loginKeyHashedHex).then(async () => {
-            await apiLogin({
-              token: loginKeyHex,
-            });
+  useEffect(() => {
+    if (loaded.current) return;
+    if (!initializing) {
+      if (auth.user) {
+        let auth_user = auth.user.principal;
+        const login = async () => {
+          try {
+            let result = await apiGetUser(auth_user);
+            setUser(result);
+          } catch (e) {
+            await actor?.register();
+            await login();
+          }
+          loaded.current = true;
+          toastId.current && toast.done(toastId.current);
+        };
 
-            login();
-          });
-        });
-      };
+        login();
+      } else {
+          toastId.current && toast.done(toastId.current);
 
-      login();
+      }
     }
-  }, [auth, initializing]);
+  }, [initializing, auth.user]);
+
+  const identity = useIdentity();
+
+  useEffect(() => {
+    if (!identity) return;
+    if (identity.getPrincipal().toText() == "2vxsx-fae") {
+      auth.disconnect();
+    }
+  }, [identity]);
 
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 }

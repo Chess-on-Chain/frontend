@@ -1,4 +1,8 @@
-import axios from "axios";
+import { HttpAgent } from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
+import { createActor } from "./canister_factory";
+import { Buffer } from "buffer";
+import mime from "mime";
 
 // ======================================
 // 🔸 Tipe response
@@ -20,18 +24,16 @@ export class ApiError extends Error {
   }
 }
 
-interface ApiSuccess<T> {
-  status: "ok";
-  data: T;
-}
+export class UserNotFound extends Error {}
 
 export interface User {
-  id: string
-  username: string;
+  id: string;
+  username: string | undefined;
   first_name: string;
-  last_name: string;
-  country: string;
+  last_name: string | undefined;
+  country: string | undefined;
   score: number;
+  photo_id: string | undefined;
 }
 
 export interface RoomData {
@@ -41,98 +43,108 @@ export interface RoomData {
 }
 
 // ======================================
-// 🔸 Konfigurasi Axios
-// ======================================
-
-const STORAGE_KEY = "token";
-
-export const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL as string,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// ⬇️ Ambil token dari localStorage saat init
-const storedToken = localStorage.getItem(STORAGE_KEY);
-if (storedToken) {
-  api.defaults.headers.common["Authorization"] = storedToken;
-}
-
-// ======================================
-// 🔸 Token Handling
-// ======================================
-
-function setToken(token: string): void {
-  api.defaults.headers.common["Authorization"] = token;
-  localStorage.setItem(STORAGE_KEY, token);
-}
-
-export function clearToken(): void {
-  delete api.defaults.headers.common["Authorization"];
-  localStorage.removeItem(STORAGE_KEY);
-}
-
-// ======================================
 // 🔸 Error Handling
 // ======================================
 
-function handleError(err: unknown): never {
-  if (axios.isAxiosError(err)) {
-    const res = err.response;
-    if (res?.data?.status === "bad" && res?.data?.detail) {
-      throw new ApiError(res.data.detail);
-    }
-  }
+// function handleError(err: unknown): never {
+//   // if (axios.isAxiosError(err)) {
+//   //   const res = err.response;
+//   //   if (res?.data?.status === "bad" && res?.data?.detail) {
+//   //     throw new ApiError(res.data.detail);
+//   //   }
+//   // }
 
-  throw new ApiError("Network or unknown error");
-}
-
-// ======================================
-// 🔹 AUTH / LOGIN
-// ======================================
-
-export interface LoginPayload {
-  token: string;
-}
-
-export async function apiLogin(payload: LoginPayload): Promise<string> {
-  try {
-    const res = await api.post<{ token: string }>("/users/login", payload);
-    const token = res.data.token;
-    setToken(token);
-    return token;
-  } catch (err) {
-    handleError(err);
-  }
-}
+//   throw new ApiError("Network or unknown error");
+// }
 
 // ======================================
 // 🔹 USERS
 // ======================================
 
-let _me: User | undefined;
+const agent = HttpAgent.createSync({
+  host: import.meta.env.VITE_ICP_API_HOST as string,
+});
 
-export async function apiGetMe(): Promise<User> {
-  if (!_me) {
-    try {
-      const res = await api.get<ApiSuccess<User>>("/users/me");
-      _me = res.data.data;
-    } catch (err) {
-      handleError(err);
-    }
+let anonymousActor = createActor(
+  import.meta.env.VITE_COC_CANISTER_ID as string,
+  {
+    agent,
   }
+);
 
-  return _me;
+// export async function apiGetMe(): Promise<User> {
+//   if (!_me) {
+//       await anonymousActor.get_user()
+
+//     try {
+//     } catch (err) {
+//       handleError(err);
+//     }
+//   }
+
+//   return _me;
+// }
+
+export async function apiGetFile(file_id: string): Promise<string> {
+  const result = await anonymousActor.get_file(file_id);
+  if ("ok" in result) {
+    const file = result.ok;
+
+    let image = "data:";
+    const mimetype = mime.getType(file.filename);
+
+    if (!mimetype) {
+      throw Error;
+    }
+
+    image += mimetype + ";base64,";
+    image += Buffer.from(file.data).toString("base64");
+
+    return image;
+  } else {
+    throw Error;
+  }
 }
 
-export async function apiGetUser(id: string): Promise<User> {
-  try {
-    const res = await api.get<ApiSuccess<User>>(`/users/${id}`);
-    return res.data.data;
-  } catch (err) {
-    handleError(err);
+export async function apiGetUser(id: Principal): Promise<User> {
+  // try {
+  let result = await anonymousActor.get_user(id);
+  if ("ok" in result) {
+    // console.log(anonymousActor.get_file)
+
+    // try {
+    //   const keren = await anonymousActor.get_file(
+    //     Buffer.from(result.ok.photo[0] as any).toString("hex")
+    //   );
+    //   console.log(keren)
+    // } catch (e) {
+    //   console.error(e);
+    // }
+
+    const [first_name, last_name] = result.ok.fullname.split(" ", 2);
+
+    let photo_id: string | undefined;
+
+    if (result.ok.photo[0]) {
+      photo_id = Buffer.from(result.ok.photo[0]).toString("hex");
+    }
+
+    const user: User = {
+      id: result.ok.id,
+      username: result.ok.username[0],
+      first_name: first_name,
+      last_name: last_name ?? "",
+      country: result.ok.country[0],
+      score: result.ok.score,
+      photo_id,
+    };
+    return user;
+  } else {
+    throw UserNotFound;
   }
+  // } catch (err) {
+  //   handleError(err);
+  // }
 }
 
 export interface UpdateUserPayload {
@@ -142,43 +154,43 @@ export interface UpdateUserPayload {
   country?: string;
 }
 
-export async function apiUpdateUser(
-  id: string,
-  data: UpdateUserPayload
-): Promise<void> {
-  try {
-    await api.patch(`/users/${id}`, data);
-  } catch (err) {
-    handleError(err);
-  }
-}
+// export async function apiUpdateUser(
+//   id: string,
+//   data: UpdateUserPayload
+// ): Promise<void> {
+//   try {
+//     await api.patch(`/users/${id}`, data);
+//   } catch (err) {
+//     handleError(err);
+//   }
+// }
 
-// ======================================
-// 🔹 ROOMS
-// ======================================
+// // ======================================
+// // 🔹 ROOMS
+// // ======================================
 
-export async function apiCreateOrJoinRoom(): Promise<RoomData> {
-  try {
-    const res = await api.post<ApiSuccess<RoomData>>("/rooms");
-    return res.data.data;
-  } catch (err) {
-    handleError(err);
-  }
-}
+// export async function apiCreateOrJoinRoom(): Promise<RoomData> {
+//   try {
+//     const res = await api.post<ApiSuccess<RoomData>>("/rooms");
+//     return res.data.data;
+//   } catch (err) {
+//     handleError(err);
+//   }
+// }
 
-export async function apiGetRoom(id: string): Promise<RoomData> {
-  try {
-    const res = await api.get<ApiSuccess<RoomData>>(`/rooms/${id}`);
-    return res.data.data;
-  } catch (err) {
-    handleError(err);
-  }
-}
+// export async function apiGetRoom(id: string): Promise<RoomData> {
+//   try {
+//     const res = await api.get<ApiSuccess<RoomData>>(`/rooms/${id}`);
+//     return res.data.data;
+//   } catch (err) {
+//     handleError(err);
+//   }
+// }
 
-export async function apiCancelRoom(): Promise<void> {
-  try {
-    await api.delete("/rooms");
-  } catch (err) {
-    handleError(err);
-  }
-}
+// export async function apiCancelRoom(): Promise<void> {
+//   try {
+//     await api.delete("/rooms");
+//   } catch (err) {
+//     handleError(err);
+//   }
+// }

@@ -1,25 +1,25 @@
 import { useContext, useEffect, useRef, useState } from "react";
-// import { Chess } from "chess.js";
 import Board from "../components/ui/common/board/Board";
 import { Flag, Timer } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useCaller } from "../hooks/canister";
-import {
-  apiCancelRoom,
-  apiCreateOrJoinRoom,
-  ApiError,
-  apiGetMe,
-  apiGetUser,
-  type RoomData,
-  type User,
-} from "../helpers/api";
+import { apiGetUser, type User } from "../helpers/api";
 import { BoardContext } from "../context/BoardContext";
 import { useIdentity } from "@nfid/identitykit/react";
 import { UserContext } from "../context/UserContext";
 import { MatchContext } from "../context/MatchContext";
 import { getTimerColorClass, resetTimer, useMatchTimer } from "../hooks/timer";
 import { usePawnDawn } from "../hooks/pawnDawn";
+import type { Principal } from "@dfinity/principal";
+import type { MatchResultHistory } from "../helpers/canister_factory/contract.did";
+import pusher from "../helpers/pusher";
+import type { Channel } from "pusher-js";
+import * as WebsocketTypes from "./../types/WebsocketTypes";
+import { IDL } from "@dfinity/candid";
+import PhotoProfile from "../components/ui/common/image/PhotoProfile";
+import { getCountry } from "../helpers/country";
+import { ConfirmDialog } from "../components/ui/common";
+import { toArrayBuffer } from "../helpers/utils";
 
 interface MoveData {
   from_position: string;
@@ -35,197 +35,196 @@ interface LayoutProps {
 const Gameplay = () => {
   const { setSelfColor } = useContext(MatchContext);
 
-  const [
-    chessPosition,
-    setChessPosition,
-    boardOrientation,
-    setBoardOrientation,
-  ] = useContext(BoardContext);
+  const [, setChessPosition, boardOrientation, setBoardOrientation] =
+    useContext(BoardContext);
 
-  const previousChessPosition = useRef<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (
-      chessPosition != previousChessPosition.current &&
-      previousChessPosition.current
-    ) {
-      new Audio("/audio/move.mp3").play().catch(() => {});
-    }
-
-    previousChessPosition.current = chessPosition;
-  }, [chessPosition]);
-
-  useEffect(() => {
-    setSelfColor && setSelfColor(boardOrientation);
-  }, [boardOrientation]);
-
-  const [matchId, setMatchId] = useState("");
+  const [matchId, setMatchId] = useState<bigint>(0n);
   const [canPlay, setCanPlay] = useState(false);
   const [errorText, setErrorText] = useState<string | undefined>();
+  const loaded = useRef(false);
+  const boardOrientationRef = useRef(boardOrientation);
+
+  const channelWebsocket = useRef<Channel | null>(null);
 
   const [matchStatus, setMatchStatus] = useState("ongoing");
 
   const user = useContext(UserContext);
-  // const [opponentUser, setOpponentUser] = useState<User | undefined>();
   const { setOpponent: setOpponentUser } = useContext(MatchContext);
 
-  const caller: any = useCaller();
-
-  // const chessRef = useRef(new Chess());
-  // const chessGame = chessRef.current;
+  const actor = useCaller();
   const identity = useIdentity();
 
-  useEffect(() => {
-    let loaded = true;
-    if (!caller) return;
+  const init = async (caller: Principal) => {
+    listenWebsocket(caller);
 
-    // setChessPosition(chessGame.fen());
-
-    const startWatchingMatch = async (
-      x: string,
-      orientation: "black" | "white"
-    ) => {
-      let totalMove = 0;
-      while (loaded) {
-        const match = await caller.get_match(x);
-        const moves: any[] = match["moves"];
-
-        if (match["winner"] == orientation) {
-          setMatchStatus("win");
-          setChessPosition(match["fen"]);
-          break;
-        } else if (
-          match["winner"] == (orientation == "white" ? "black" : "white")
-        ) {
-          setMatchStatus("lose");
-          setChessPosition(match["fen"]);
-          break;
-        }
-
-        if (moves.length == totalMove) {
-          continue;
-        }
-
-        setChessPosition(match["fen"]);
-
-        totalMove = moves.length;
+    const match = await actor?.get_active_match(caller);
+    if (match) {
+      if ("ok" in match) {
+        await onMatchExists(caller, match.ok);
+        return;
+      } else if ("err" in match && match.err == "waiting for opponent") {
+        return;
       }
-    };
+    }
 
-    caller.get_caller_match().then(async (matchOpt: any[]) => {
-      if (matchOpt.length >= 1) {
-        const user = await apiGetMe();
-        let color: "white" | "black" = "white";
-        const match = matchOpt[0];
-        console.log(user, match["black_player"]["id"].toText());
-        if (match.black_player.id.toText() == user.id) {
+    await onCreateMatch(caller);
+  };
+
+  const onCreateMatch = async (caller: Principal) => {
+    const result = await actor?.make_match(true);
+
+    if (result && "ok" in result) {
+      if ("match" in result.ok) {
+        const match = result.ok.match;
+
+        setMatchId(match.id);
+        let opponent_principal = match.white_player;
+        if (match.white_player.toText() == caller.toText()) {
+          setBoardOrientation("white");
+          opponent_principal = match.black_player;
+        } else {
           setBoardOrientation("black");
-          color = "black";
         }
+
+        let opponent_user = await apiGetUser(opponent_principal);
+        setOpponentUser && setOpponentUser(opponent_user);
         setChessPosition(match.fen);
         setCanPlay(true);
-        setMatchId(match.id);
-        startWatchingMatch(match.id, color);
         return;
       }
+    }
 
-      if (identity?.getPrincipal().isAnonymous()) {
-        setErrorText("Wallet is not connected properly");
-        return;
-      }
+    if (result && "err" in result) {
+      setErrorText(result.err);
+    }
+  };
 
-      apiGetMe()
-        .then(async (user) => {
-          let matchServer: RoomData | undefined;
+  const onMatchExists = async (
+    caller: Principal,
+    match: MatchResultHistory
+  ) => {
+    setMatchId(match.id);
 
-          try {
-            matchServer = await apiCreateOrJoinRoom();
-          } catch (e: any) {
-            if (e instanceof ApiError) {
-              setErrorText(e.detail);
-              return;
-            }
-          }
+    let opponent_principal = match.white_player;
 
-          if (!matchServer) return;
+    if (match.white_player.toText() == caller.toText()) {
+      setBoardOrientation("white");
+      opponent_principal = match.black_player;
+    } else {
+      setBoardOrientation("black");
+    }
 
-          if (matchServer.match_id) {
-            const match = await caller.get_match(matchServer.match_id);
-            setChessPosition(match.fen);
+    let opponent_user = await apiGetUser(opponent_principal);
+    setOpponentUser && setOpponentUser(opponent_user);
 
-            // console.log(match, match["black_player"]["id"].toText(), user["id"]);
-            let color: "white" | "black" = "white";
+    let current_fen = match.moves.reverse()[0].fen; // last moves
+    setChessPosition(current_fen);
+    setCanPlay(true);
+  };
 
-            console.log(
-              user.id,
-              match.black_player.id.toText(),
-              match.white_player.id.toText()
-            );
-            if (match.black_player.id.toText() == user.id) {
-              setBoardOrientation("black");
-              color = "black";
+  useEffect(() => {
+    return () => {
+      actor?.cancel_match_room();
+      channelWebsocket.current?.unsubscribe();
+    };
+  }, []);
 
-              setOpponentUser &&
-                setOpponentUser(
-                  await apiGetUser(match.white_player.id.toText())
-                );
-            } else {
-              setOpponentUser &&
-                setOpponentUser(
-                  await apiGetUser(match.black_player.id.toText())
-                );
-            }
+  useEffect(() => {
+    setSelfColor && setSelfColor(boardOrientation);
+    boardOrientationRef.current = boardOrientation;
+  }, [boardOrientation]);
 
-            setCanPlay(true);
-            setMatchId(matchServer.match_id);
-            resetTimer();
-            startWatchingMatch(matchServer.match_id, color);
-          } else {
-            const interval = setInterval(async () => {
-              let match = await caller.get_caller_match();
-              // console.log(match);
-              if (match.length >= 1) {
-                match = match[0];
-                let color: "white" | "black" = "white";
-                console.log(
-                  user.id,
-                  match.black_player.id.toText(),
-                  match.white_player.id.toText()
-                );
+  useEffect(() => {
+    if (loaded.current) return;
+    if (!identity) return;
+    if (identity.getPrincipal().isAnonymous()) return;
+    if (identity.getPrincipal().toText() == "2vxsx-fae") return;
 
-                if (match.black_player.id.toText() === user.id) {
-                  color = "black";
-                  setBoardOrientation("black");
+    init(identity.getPrincipal());
 
-                  setOpponentUser &&
-                    (await apiGetUser(match.white_player.id.toText()));
-                } else {
-                  setOpponentUser &&
-                    setOpponentUser(
-                      await apiGetUser(match.black_player.id.toText())
-                    );
-                }
-                setCanPlay(true);
-                setChessPosition(match.fen);
-                setMatchId(match.id);
-                resetTimer();
-                startWatchingMatch(match.id, color);
-                clearInterval(interval);
-              }
-            }, 1500);
-          }
-        })
-        .catch((e) => {
-          if (e instanceof ApiError) {
-            setErrorText(e.detail);
-          }
-        });
+    loaded.current = true;
+  }, [identity]);
+
+  const listenWebsocket = (principal: Principal) => {
+    console.log("WEBSOCKET LISTENING");
+    const channel = pusher.subscribe(principal.toString());
+    channelWebsocket.current = channel;
+
+    channel.bind("match_created", async (data: any) => {
+      // const body = new Uint8Array(Object.values(data));
+      const buf = toArrayBuffer(data);
+      const candid = WebsocketTypes.MatchCreatedCandid;
+
+      const value = IDL.decode([candid], buf);
+      // const value = IDL.decode([candid], body);
+      const match: WebsocketTypes.MatchCreated = value[0] as any;
+      await onMatchCreated(principal, match);
     });
 
-    return () => {
-      loaded = false;
-    };
-  }, [caller]);
+    channel.bind("move_created", async (data: any) => {
+      // const body = new Uint8Array(Object.values(data));
+      const buf = toArrayBuffer(data);
+      const candid = WebsocketTypes.MoveCreatedCandid;
+
+      const value = IDL.decode([candid], buf);
+      // const value = IDL.decode([candid], body);
+      const move: WebsocketTypes.MoveCreated = value[0] as any;
+      await onMoveCreated(move);
+    });
+
+    channel.bind("match_finished", async (data: any) => {
+      // const body = new Uint8Array(Object.values(data));
+      const buf = toArrayBuffer(data);
+      const candid = WebsocketTypes.MatchFinishedCandid;
+
+      const value = IDL.decode([candid], buf);
+      // const value = IDL.decode([candid], body);
+      const match: WebsocketTypes.MatchFinished = value[0] as any;
+      await onMatchFinished(match);
+    });
+  };
+
+  const onMatchFinished = async (match: WebsocketTypes.MatchFinished) => {
+    switch (match.winner) {
+      case boardOrientationRef.current:
+        setMatchStatus("win");
+        break;
+      case "draw":
+        setMatchStatus("draw");
+        break;
+      default:
+        setMatchStatus("lose");
+    }
+  };
+
+  const onMatchCreated = async (
+    caller: Principal,
+    match: WebsocketTypes.MatchCreated
+  ) => {
+    setMatchId(match.match_id);
+
+    const myOrientation: "black" | "white" =
+      match.white_player.toText() == caller.toText() ? "white" : "black";
+
+    let opponentPrincipal: Principal = match.white_player;
+    if (myOrientation == "white") {
+      opponentPrincipal = match.black_player;
+    }
+
+    const opponentUser = await apiGetUser(opponentPrincipal);
+
+    setOpponentUser && setOpponentUser(opponentUser);
+    setBoardOrientation(myOrientation);
+    setChessPosition(match.fen);
+    setCanPlay(true);
+    resetTimer();
+  };
+
+  const onMoveCreated = async (move: WebsocketTypes.MoveCreated) => {
+    setChessPosition(move.fen);
+    new Audio("/audio/move.mp3").play().catch(() => {});
+    resetTimer();
+  };
 
   const isMobile = useIsMobile();
 
@@ -238,14 +237,14 @@ const Gameplay = () => {
     piece: string;
   }) => {
     try {
-      await caller.add_match_move(matchId, from_position, to_position, "0");
+      await actor?.make_move(matchId, from_position, to_position, []);
     } catch (e: any) {
       if (
         e
           .toString()
           .includes("Langkah ini seharusnya promosi, tapi tidak diberikan")
       ) {
-        await caller.add_match_move(matchId, from_position, to_position, "q");
+        await actor?.make_move(matchId, from_position, to_position, ["q"]);
       }
     }
   };
@@ -272,7 +271,10 @@ const Gameplay = () => {
             <button
               className="bg-red-500 text-black font-semibold text-xl leading-8 px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
               onClick={() => {
-                apiCancelRoom().then(() => {
+                // apiCancelRoom().then(() => {
+                //   window.location.href = "/";
+                // });
+                actor?.cancel_match_room().then(() => {
                   window.location.href = "/";
                 });
               }}
@@ -287,6 +289,21 @@ const Gameplay = () => {
           <div className="w-full space-y-8">
             <p className="text-center text-white font-medium text-3xl sm:text-5xl leading-20 sm:leading-24 bg-linear-to-l from-white/0 from-20% via-[#fdda13bb] via-50% to-white/0 to-80%">
               Victory
+            </p>
+            <button
+              onClick={() => (window.location.href = "/")}
+              className="bg-secondary text-black text-xl px-3 py-1 rounded m-2 mx-auto block cursor-pointer"
+            >
+              Back
+            </button>
+          </div>
+        </div>
+      )}
+      {matchStatus == "draw" && (
+        <div className="fixed h-screen w-full top-0 right-0 bg-black/70 z-50 flex items-center">
+          <div className="w-full space-y-8">
+            <p className="text-center text-white font-medium text-3xl sm:text-5xl leading-20 sm:leading-24 bg-linear-to-l from-white/0 from-20% via-[#fdda13bb] via-50% to-white/0 to-80%">
+              Draw
             </p>
             <button
               onClick={() => (window.location.href = "/")}
@@ -329,6 +346,8 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
   const { timeColor, timeLeft } = useMatchTimer();
   const { selfPawnDawn, opponentPawnDawn } = usePawnDawn();
 
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const [opponentColor, setOpponentColor] = useState<
     "white" | "black" | undefined
   >();
@@ -351,10 +370,13 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
       {/* PLAYER 1 */}
       <div className="flex justify-between itmes-center space-x-2 w-full text-white text-sm">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-full bg-secondary"></div>
+          {/* <div className="w-8 h-8 rounded-full bg-secondary"></div> */}
+          <PhotoProfile fileId={opponent?.photo_id} classSize="w-8 h-8" />
           <div>
             <p>{opponent?.username || opponent?.first_name || "-"}</p>
-            <p className="text-white/50">{opponent?.country || "-"}</p>
+            <p className="text-white/50">
+              {(opponent?.country && getCountry(opponent.country)?.flag) || "-"}
+            </p>
           </div>
         </div>
         <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-1 px-2 text-sm">
@@ -395,10 +417,12 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
       {/* PLAYER 2 */}
       <div className="flex justify-between items-center space-x-2 w-full text-sm text-white">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-full bg-secondary"></div>
+          {/* <div className="w-8 h-8 rounded-full bg-secondary"></div> */}
+          <PhotoProfile fileId={self?.photo_id} classSize="w-8 h-8" />
           <div>
             <p>{self?.username || self?.first_name || "-"}</p>
-            <p className="text-white/50">{self?.country || "-"}</p>
+            {/* <p className="text-white/50">{self?.country || "-"}</p> */}
+            {(self?.country && getCountry(self.country)?.flag) || "-"}
           </div>
         </div>
         <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-1 px-2 text-sm">
@@ -433,24 +457,35 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
       <div className="flex justify-center items-center w-full my-8">
         <button
           className="text-center block cursor-pointer"
-          onClick={() => {
-            actor.resign();
-          }}
+          onClick={() => setShowConfirm(true)}
+          // onClick={() => {
+          //   actor?.resign();
+          // }}
         >
           <div className="p-3.5 rounded-full mb-1 5 mx-auto bg-secondary">
-            {/* <Link to="/"> */}
             <Flag size={24} className="text-black" />
-            {/* </Link> */}
           </div>
           <p className="text-white">Resign</p>
         </button>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => {
+          actor?.resign();
+          window.location.href = "/";
+        }}
+        message="Are you sure you want to resign?"
+      />
     </div>
   );
 };
 
 const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
   const actor = useCaller();
+  const [showConfirm, setShowConfirm] = useState(false);
 
   return (
     <div className="hidden lg:flex items-center justify-center w-full h-full space-x-4">
@@ -459,19 +494,30 @@ const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
         <div className="flex justify-center items-center w-full lg:w-3/5 h-full">
           <button
             className="mx-auto text-center block cursor-pointer"
-            onClick={() => {
-              actor && actor.resign();
-            }}
+            onClick={() => setShowConfirm(true)}
+            // onClick={() => {
+            //   actor && actor.resign();
+            // }}
           >
             <div className="p-4.5 mx-auto rounded-full mb-1 5 bg-secondary">
-              <Link to="/">
-                <Flag size={24} className="text-black" />
-              </Link>
+              <Flag size={24} className="text-black" />
             </div>
             <p className="text-lg tracking-wide text-white">Resign</p>
           </button>
         </div>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => {
+          // actor?.resign();
+          actor && actor.resign();
+          window.location.href = "/";
+        }}
+        message="Are you sure you want to resign?"
+      />
 
       {/* MIDDLE - BOARD */}
       <div className="aspect-square w-full max-w-[700px] bg-white">

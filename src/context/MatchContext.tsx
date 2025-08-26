@@ -1,21 +1,21 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import type { User } from "../helpers/api";
-import { UserContext } from "./UserContext";
+import useUser from "../hooks/useUser";
 
 export const MatchContext = createContext<{
-  self: User | undefined;
-  opponent: User | undefined;
-  setOpponent: ((user: User) => void) | undefined;
-  selfColor: string | undefined;
-  setSelfColor: ((color: "white" | "black") => void) | undefined;
-}>({} as any);
+  self?: User;
+  opponent?: User;
+  setOpponent?: (user: User) => void;
+  selfColor?: string;
+  setSelfColor?: (color: "white" | "black") => void;
+}>({});
 
 export function MatchProvider({ children }: any) {
   const [self, setSelf] = useState<User | undefined>();
   const [opponent, setOpponent] = useState<User | undefined>();
   const [selfColor, setSelfColor] = useState<string | undefined>();
 
-  const user = useContext(UserContext);
+  const user = useUser();
 
   useEffect(() => {
     setSelf(user);
