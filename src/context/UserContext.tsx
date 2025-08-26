@@ -30,21 +30,26 @@ export function UserProvider({ children }: any) {
 
   useEffect(() => {
     if (loaded.current) return;
-    if (!initializing && auth.user) {
-      let auth_user = auth.user.principal;
-      const login = async () => {
-        try {
-          let result = await apiGetUser(auth_user);
-          setUser(result);
-        } catch (e) {
-          await actor?.register();
-          await login();
-        }
-        loaded.current = true;
-        toastId.current && toast.done(toastId.current);
-      };
+    if (!initializing) {
+      if (auth.user) {
+        let auth_user = auth.user.principal;
+        const login = async () => {
+          try {
+            let result = await apiGetUser(auth_user);
+            setUser(result);
+          } catch (e) {
+            await actor?.register();
+            await login();
+          }
+          loaded.current = true;
+          toastId.current && toast.done(toastId.current);
+        };
 
-      login();
+        login();
+      } else {
+          toastId.current && toast.done(toastId.current);
+
+      }
     }
   }, [initializing, auth.user]);
 

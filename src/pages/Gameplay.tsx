@@ -156,7 +156,7 @@ const Gameplay = () => {
       const buf = toArrayBuffer(data);
       const candid = WebsocketTypes.MatchCreatedCandid;
 
-      const value = IDL.decode([candid], buf)
+      const value = IDL.decode([candid], buf);
       // const value = IDL.decode([candid], body);
       const match: WebsocketTypes.MatchCreated = value[0] as any;
       await onMatchCreated(principal, match);
@@ -167,7 +167,7 @@ const Gameplay = () => {
       const buf = toArrayBuffer(data);
       const candid = WebsocketTypes.MoveCreatedCandid;
 
-      const value = IDL.decode([candid], buf)
+      const value = IDL.decode([candid], buf);
       // const value = IDL.decode([candid], body);
       const move: WebsocketTypes.MoveCreated = value[0] as any;
       await onMoveCreated(move);
@@ -178,7 +178,7 @@ const Gameplay = () => {
       const buf = toArrayBuffer(data);
       const candid = WebsocketTypes.MatchFinishedCandid;
 
-      const value = IDL.decode([candid], buf)
+      const value = IDL.decode([candid], buf);
       // const value = IDL.decode([candid], body);
       const match: WebsocketTypes.MatchFinished = value[0] as any;
       await onMatchFinished(match);
@@ -346,7 +346,7 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
   const { self, opponent, selfColor } = useContext(MatchContext);
   const { timeColor, timeLeft } = useMatchTimer();
   const { selfPawnDawn, opponentPawnDawn } = usePawnDawn();
-  
+
   const [showConfirm, setShowConfirm] = useState(false);
 
   const [opponentColor, setOpponentColor] = useState<
@@ -423,8 +423,7 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
           <div>
             <p>{self?.username || self?.first_name || "-"}</p>
             {/* <p className="text-white/50">{self?.country || "-"}</p> */}
-              {(self?.country && getCountry(self.country)?.flag) || "-"}
-
+            {(self?.country && getCountry(self.country)?.flag) || "-"}
           </div>
         </div>
         <div className="overflow-x-auto hide-scrollbar whitespace-nowrap text-white flex flex-1 items-center gap-2 ml-1 px-2 text-sm">
@@ -487,7 +486,6 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
 const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
   const actor = useCaller();
   const [showConfirm, setShowConfirm] = useState(false);
-
 
   return (
     <div className="hidden lg:flex items-center justify-center w-full h-full space-x-4">

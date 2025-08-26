@@ -11,6 +11,7 @@ import {
 import { dataURLToUint8Array, getCacheFile } from "../helpers/utils";
 import useUser from "../hooks/useUser";
 import { toast } from "react-toastify";
+import { PopupLayout } from "../components/ui/layout/PopupLayout";
 // import toast from "react-hot-toast";
 // import { apiUpdateUser } from "../helpers/api";
 
@@ -132,6 +133,8 @@ const ProfileSettings = () => {
 
   return (
     <>
+      <PopupLayout />
+
       <div className="min-h-screen w-full lg:max-w-7xl px-6 py-10 text-white">
         <div className="mb-10 text-2xl font-semibold">Profile Settings</div>
 

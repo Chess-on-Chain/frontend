@@ -1,5 +1,5 @@
 import { Principal } from "@dfinity/principal";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { apiGetUser, type User } from "../../../helpers/api";
 import { getCacheFile } from "../../../helpers/utils";
 import { createPusherClient } from "../../../helpers/pusher";
@@ -7,7 +7,6 @@ import useUser from "../../../hooks/useUser";
 import { IDL } from "@dfinity/candid";
 import * as WebsocketTypes from "./../../../types/WebsocketTypes";
 import { useCaller } from "../../../hooks/canister";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 interface Notification {
@@ -16,21 +15,21 @@ interface Notification {
 }
 
 export function PopupLayout() {
-  const notifications = useRef<Notification[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notification, setNotification] = useState<Notification | null>();
   const [requester, setRequester] = useState<User | null>();
   const [avatar, setAvatar] = useState<string | null>();
   const user = useUser();
   const actor = useCaller();
-  const navigate = useNavigate();
 
   useEffect(() => {
-    if (notifications.current.length >= 1) {
-      setNotification(notifications.current[0]);
+    console.log(notifications);
+    if (notifications.length >= 1) {
+      setNotification(notifications[0]);
     } else {
       setNotification(null);
     }
-  }, [notifications.current]);
+  }, [notifications]);
 
   useEffect(() => {
     if (notification) {
@@ -61,34 +60,49 @@ export function PopupLayout() {
       const value = IDL.decode([candid], body);
       const match: WebsocketTypes.InviteMatch = value[0] as any;
 
-      notifications.current = [
-        ...notifications.current,
+      const newNotifications: Notification[] = [
+        ...notifications,
         {
           principal: match.from,
           type: "invite_match",
         },
       ];
+      setNotifications(newNotifications);
+    });
+
+    channel.bind("accept_invite_match", () => {
+      // const body = new Uint8Array(Object.values(data));
+      // const candid = WebsocketTypes.InviteMatchCandid;
+
+      // const value = IDL.decode([candid], body);
+      // const match: WebsocketTypes.InviteMatch = value[0] as any;
+      window.location.href = "/gameplay";
     });
 
     channel.bind("incoming_friendship", (data: any) => {
+      console.log(data);
       const body = new Uint8Array(Object.values(data));
       const candid = WebsocketTypes.SendFriendshipCandid;
 
       const value = IDL.decode([candid], body);
       const requester: WebsocketTypes.SendFriendship = value[0] as any;
 
-      notifications.current = [
-        ...notifications.current,
+      // notifications = [
+      //   ...notifications,
+      //   {
+      //     principal: requester.from,
+      //     type: "incoming_friend",
+      //   },
+      // ];
+      const newNotifications: Notification[] = [
+        ...notifications,
         {
           principal: requester.from,
           type: "incoming_friend",
         },
       ];
+      setNotifications(newNotifications);
     });
-
-    return () => {
-      channel.unsubscribe();
-    };
   }, [user]);
 
   const acceptMatch = async (principal: Principal) => {
@@ -100,7 +114,8 @@ export function PopupLayout() {
     toast.done(toastId);
 
     if (result) {
-      navigate("/gameplay");
+      // navigate("/gameplay");
+      window.location.href = "/gameplay";
     } else {
       toast.error("Errorr...");
     }
@@ -117,17 +132,17 @@ export function PopupLayout() {
     if (result) {
       // navigate("/gameplay");
       toast.success("😊");
-      // TODO: redirect ke friends page
+      setTimeout(() => {
+        window.location.href = "/friends";
+      }, 1000);
     } else {
       toast.error("Errorr...");
     }
   };
 
   const popNotification = async () => {
-    notifications.current = notifications.current.slice(
-      0,
-      notifications.current.length - 1
-    );
+    const newNotifications = notifications.slice(0, notifications.length - 1);
+    setNotifications(newNotifications);
   };
 
   const displayName =
@@ -158,16 +173,16 @@ export function PopupLayout() {
               onClick={() => {
                 popNotification();
                 if (notification.type == "incoming_friend") {
-                  acceptMatch(notification.principal);
-                } else if (notification.type == "invite_match") {
                   acceptFriend(notification.principal);
+                } else if (notification.type == "invite_match") {
+                  acceptMatch(notification.principal);
                 }
               }}
             >
               Accept
             </button>
             <button
-              className="bg-red-500 p-2 text-lg text-white rounded"
+              className="bg-red-500 p-2 text-lg text-white rounded cursor-pointer"
               onClick={popNotification}
             >
               Reject
