@@ -6,6 +6,7 @@ import {
 import { createContext, useEffect, useRef, useState } from "react";
 import { useCaller } from "../hooks/canister";
 import { apiGetUser, type User } from "../helpers/api";
+import { toast, type Id } from "react-toastify";
 
 export const UserContext = createContext<User | undefined>(undefined);
 
@@ -15,6 +16,17 @@ export function UserProvider({ children }: any) {
   const initializing = useIsInitializing();
   const actor = useCaller();
   const loaded = useRef(false);
+  const toastLoaded = useRef(false);
+  let toastId = useRef<Id | null>(null);
+
+  useEffect(() => {
+    if (toastLoaded.current) return;
+    toastId.current = toast.info("Please wait...", {
+      isLoading: true,
+      autoClose: false,
+    });
+    toastLoaded.current = true;
+  }, []);
 
   useEffect(() => {
     if (loaded.current) return;
@@ -29,6 +41,7 @@ export function UserProvider({ children }: any) {
           await login();
         }
         loaded.current = true;
+        toastId.current && toast.done(toastId.current);
       };
 
       login();

@@ -11,7 +11,7 @@ import {
 import { dataURLToUint8Array, getCacheFile } from "../helpers/utils";
 import useUser from "../hooks/useUser";
 import { countries } from "../helpers/country";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 // import { apiUpdateUser } from "../helpers/api";
 
 const ProfileSettings = () => {
@@ -108,7 +108,7 @@ const ProfileSettings = () => {
         // navigate("/profile");
         window.location.reload();
       } else if (result && "err" in result) {
-      // TODO: toastify berat ganti yang lain
+        // TODO: toastify berat ganti yang lain
         toast.error(result.err, {
           autoClose: false,
         });
@@ -285,8 +285,6 @@ const ProfileSettings = () => {
           </form>
         </div>
       </div>
-
-      <ToastContainer />
     </>
   );
 };
