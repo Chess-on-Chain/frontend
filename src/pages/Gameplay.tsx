@@ -1,7 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import Board from "../components/ui/common/board/Board";
 import { Flag, Timer } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useCaller } from "../hooks/canister";
 import { apiGetUser, type User } from "../helpers/api";
@@ -456,9 +455,7 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
           // }}
         >
           <div className="p-3.5 rounded-full mb-1 5 mx-auto bg-secondary">
-            {/* <Link to="/"> */}
             <Flag size={24} className="text-black" />
-            {/* </Link> */}
           </div>
           <p className="text-white">Resign</p>
         </button>
@@ -468,7 +465,10 @@ const MobileLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
       <ConfirmDialog
         open={showConfirm}
         onClose={() => setShowConfirm(false)}
-        onConfirm={() => actor?.resign()}
+        onConfirm={() => {
+          actor?.resign();
+          window.location.href = "/";
+        }}
         message="Are you sure you want to resign?"
       />
     </div>
@@ -493,9 +493,7 @@ const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
             // }}
           >
             <div className="p-4.5 mx-auto rounded-full mb-1 5 bg-secondary">
-              <Link to="/">
-                <Flag size={24} className="text-black" />
-              </Link>
+              <Flag size={24} className="text-black" />
             </div>
             <p className="text-lg tracking-wide text-white">Resign</p>
           </button>
@@ -506,7 +504,11 @@ const DesktopLayout: React.FC<LayoutProps> = ({ handleSelfMove }) => {
       <ConfirmDialog
         open={showConfirm}
         onClose={() => setShowConfirm(false)}
-        onConfirm={() => actor?.resign()}
+        onConfirm={() => {
+          // actor?.resign();
+          actor && actor.resign();
+          window.location.href = "/";
+        }}
         message="Are you sure you want to resign?"
       />
 
