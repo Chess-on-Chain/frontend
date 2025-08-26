@@ -46,8 +46,9 @@ export default function MatchTypeMenu() {
       <div className={canPlay ? activeClassName : nonActiveClassName}>
         <div className="absolute top-0 left-0 w-full h-20 bg-primary/60 rounded-lg border border-neutral-800 p-4 flex lg:flex-col justify-between items-center lg:items-start lg:h-[150px]">
           <div className="text-left text-secondary text-shadow-secondary bg-primary italic font-medium px-2 py-1 text-lg lg:text-2xl border-2 border-secondary border-dashed">
-            <Link to="/gameplay/coming-soon">
-              Play a Friend <span className="text-lg lg:text-xl ml-1">▶</span>
+            <Link to="/friends">
+              Play with Friend{" "}
+              <span className="text-lg lg:text-xl ml-1">▶</span>
             </Link>
           </div>
           <div className="w-12 h-12 lg:w-[76px] lg:h-[76px] bg-secondary rounded-full flex items-center lg:self-end justify-center">

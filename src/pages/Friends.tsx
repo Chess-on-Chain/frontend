@@ -96,11 +96,16 @@ export default function Friends() {
     return [];
   };
 
-  const filtered = getData().filter(
-    (p) =>
-      (p.username || "").toLowerCase().includes(search.toLowerCase()) ||
-      (p.country || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const [filtered, setFiltered] = useState<User[]>([]);
+
+  useEffect(() => {
+    const filtered: User[] = getData().filter(
+      (p) =>
+        (p.username || "").toLowerCase().includes(search.toLowerCase()) ||
+        (p.country || "").toLowerCase().includes(search.toLowerCase())
+    );
+    setFiltered(filtered)
+  }, [friends, incomingFriends]);
 
   useEffect(() => {
     if (user) {
